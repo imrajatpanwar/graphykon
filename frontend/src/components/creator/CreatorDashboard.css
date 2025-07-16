@@ -1,0 +1,276 @@
+/* Import Poppins font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Global Poppins font for creator dashboard */
+.creator-dashboard-container {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Apply Poppins to all text elements in the dashboard */
+.creator-dashboard-container * {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Specific elements that should use Poppins */
+.creator-dashboard-container h1,
+.creator-dashboard-container h2,
+.creator-dashboard-container h3,
+.creator-dashboard-container h4,
+.creator-dashboard-container h5,
+.creator-dashboard-container h6,
+.creator-dashboard-container p,
+.creator-dashboard-container span,
+.creator-dashboard-container div,
+.creator-dashboard-container button,
+.creator-dashboard-container input,
+.creator-dashboard-container textarea,
+.creator-dashboard-container label {
+  font-family: 'Poppins', sans-serif;
+}
+
+.studio-settings {
+  max-width: 990px;
+  margin: 20px auto;
+  font-family: 'Poppins', sans-serif;
+  border: 1px solid #ddd;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.profile-header {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 20px;
+  position: relative;
+}
+
+.cover-image-container {
+  position: relative;
+  padding-top: 16.67%;
+  background-color: #ccd6dd;
+}
+
+.cover-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-image-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #333;
+}
+
+.cover-username {
+  position: absolute;
+  bottom: 15px;
+  right: 20px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 5px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.cover-image-upload {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 0px;
+  /* border-radius: 8px; */
+}
+
+#cover-upload {
+  margin-bottom: 5px;
+}
+
+.profile-info {
+  display: flex;
+  align-items: flex-end;
+  padding: 0 20px;
+  margin-top: -80px;
+  position: relative;
+  z-index: 2;
+}
+
+.profile-picture-container {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 4px solid white;
+  overflow: hidden;
+  background-color: rgb(156, 163, 175);
+  margin: 0px auto 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-picture {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-picture-placeholder {
+  width: 100%;
+  height: 100%;
+  background-color: #e1e8ed;
+}
+
+.profile-details {
+  margin-top: 100px;
+}
+
+.profile-details h2 {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 0 5px 0;
+}
+
+.profile-details p {
+  margin: 0;
+  color: #536471;
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.profile-actions {
+  margin-left: auto;
+  align-self: flex-end;
+  margin-bottom: 5px;
+}
+
+.edit-profile-btn {
+  background-color: black;
+  color: white;
+  border: 1px solid black;
+  border-radius: 9999px;
+  padding: 8px 18px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.assets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.asset-placeholder {
+  height: 200px;
+  background-color: #e1e8ed;
+  border-radius: 8px;
+}
+
+.error-message {
+  color: red;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* Modal Fixes */
+.modal-90w {
+  max-width: 90% !important;
+}
+
+.modal-dialog {
+  max-height: 90vh !important;
+}
+
+.modal-content {
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.modal-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+}
+
+.modal-footer {
+  flex-shrink: 0 !important;
+  border-top: 1px solid #dee2e6 !important;
+  background-color: #f8f9fa !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 1060 !important;
+}
+
+/* Ensure modal is always visible */
+@media (max-height: 600px) {
+  .modal-body {
+    max-height: 40vh !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-90w {
+    max-width: 95% !important;
+  }
+  
+  .modal-body {
+    max-height: 50vh !important;
+  }
+} 
+
+/* Modern Sidebar Styles */
+.modern-sidebar {
+  font-family: 'Poppins', sans-serif;
+}
+
+.modern-nav-link {
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.modern-nav-link:hover {
+  transform: none !important;
+}
+
+.modern-nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background-color: #3b82f6;
+  border-radius: 0 2px 2px 0;
+}
+
+.premium-section {
+  transition: all 0.2s ease;
+}
+
+.premium-section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Animation for progress bar */
+@keyframes fillProgress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--progress-width);
+  }
+}
+
+.progress-bar {
+  animation: fillProgress 1s ease-out;
+} 

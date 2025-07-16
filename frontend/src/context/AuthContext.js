@@ -1,0 +1,188 @@
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import { useNavigate, useLocation } from 'react-router-dom';
+import io from 'socket.io-client';
+
+const AuthContext = createContext(null);
+
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [socket, setSocket] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Configure axios defaults
+  axios.defaults.baseURL = 'http://localhost:5000';
+  axios.defaults.withCredentials = true;
+
+  // Initialize socket connection
+  useEffect(() => {
+    const newSocket = io('http://localhost:5000', {
+      withCredentials: true
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.close();
+    };
+  }, []);
+
+  // Track visitor activity
+  useEffect(() => {
+    if (socket) {
+      // Send visitor join event
+      socket.emit('visitor-join', {
+        userId: user?.id || user?._id,
+        email: user?.email,
+        name: user?.name,
+        currentPage: location.pathname
+      });
+
+      // Setup activity heartbeat
+      const activityInterval = setInterval(() => {
+        socket.emit('visitor-activity');
+      }, 30000); // Send heartbeat every 30 seconds
+
+      // Join admin room if user is admin
+      if (user && (user.isAdmin || user.role === 'admin')) {
+        socket.emit('join-admin-room');
+      }
+
+      return () => {
+        clearInterval(activityInterval);
+      };
+    }
+  }, [socket, user, location.pathname]);
+
+  // Track page changes
+  useEffect(() => {
+    if (socket) {
+      socket.emit('page-change', { page: location.pathname });
+    }
+  }, [socket, location.pathname]);
+
+  // Check token expiration
+  const checkTokenExpiration = useCallback(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const tokenData = JSON.parse(atob(token.split('.')[1]));
+        const expirationTime = tokenData.exp * 1000; // Convert to milliseconds
+        const currentTime = Date.now();
+
+        if (currentTime >= expirationTime) {
+          // Token has expired
+          logout();
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Error checking token expiration:', error);
+        logout();
+        navigate('/login');
+      }
+    }
+  }, [navigate]);
+
+  // Check auth status on mount and every minute
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await axios.get('/api/auth/me', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          setUser(response.data);
+        }
+      } catch (error) {
+        if (error.response?.status === 401) {
+          logout();
+          navigate('/login');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+    // Check token expiration every minute
+    const interval = setInterval(checkTokenExpiration, 60000);
+    return () => clearInterval(interval);
+  }, [navigate, checkTokenExpiration]);
+
+  const login = async (email, password) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axios.post('/api/auth/login', {
+        email,
+        password,
+      });
+      setUser(response.data.user);
+      localStorage.setItem('token', response.data.token);
+      return response.data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'An error occurred');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const register = async (name, email, password) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axios.post('/api/auth/register', {
+        name,
+        email,
+        password,
+      });
+      setUser(response.data.user);
+      localStorage.setItem('token', response.data.token);
+      return response.data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'An error occurred');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await axios.post('/api/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem('token');
+    }
+  };
+
+  // Helper functions for admin
+  const isAdmin = () => user?.isAdmin || user?.role === 'admin';
+  const isCreator = () => user?.isCreator || user?.role === 'creator';
+  
+  const value = {
+    user,
+    setUser,
+    loading,
+    error,
+    login,
+    register,
+    logout,
+    isAdmin,
+    isCreator,
+    socket,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}; 
