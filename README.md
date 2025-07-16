@@ -1,4 +1,4 @@
-# Full Stack Authentication App
+# Graphykon Website File
 
 This is a full-stack application with React frontend and Node.js backend, featuring user authentication.
 
