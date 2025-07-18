@@ -12,7 +12,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'https://graphykon.com', 'https://www.graphykon.com'],
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -39,7 +39,7 @@ if (!require('fs').existsSync(uploadsDir)) {
 // Middleware
 app.use(cookieParser());
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'https://graphykon.com', 'https://www.graphykon.com'],
   credentials: true
 }));
 app.use(express.json());
@@ -598,6 +598,11 @@ app.use('/api/messages', require('./routes/messages'));
 // Basic route
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Graphykon API' });
+});
+
+// API base route
+app.get('/api', (req, res) => {
+  res.json({ message: 'Graphykon API is working', version: '1.0.0' });
 });
 
 // Error handling middleware

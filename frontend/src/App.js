@@ -31,17 +31,17 @@ function App() {
               </div>
             } />
             <Route path="/login" element={
-              <div className="container mt-4">
+              <div>
                 <Login />
               </div>
             } />
             <Route path="/signup" element={
-              <div className="container mt-4">
+              <div>
                 <Signup />
               </div>
             } />
             <Route path="/creator" element={
-              <div className="container mt-4">
+              <div>
                 <Creator />
               </div>
             } />
@@ -51,17 +51,17 @@ function App() {
             <Route path="/messages" element={<Messages />} />
             <Route path="/message-test" element={<MessageTest />} />
             <Route path="/search" element={
-              <div className="container mt-4">
+              <div>
                 <SearchResults />
               </div>
             } />
             <Route path="/assets/:id" element={
-              <div className="container mt-4">
+              <div>
                 <AssetDetail />
               </div>
             } />
             <Route path="/asset/:id" element={
-              <div className="container mt-4">
+              <div>
                 <AssetDetail />
               </div>
             } />
