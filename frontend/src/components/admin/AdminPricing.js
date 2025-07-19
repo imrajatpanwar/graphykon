@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Modal, Form, Button, Alert, Badge } from 'react-bootstrap';
+import getApiConfig from '../../config/api';
 
 const AdminPricing = () => {
   const [plans, setPlans] = useState([]);
@@ -35,7 +36,8 @@ const AdminPricing = () => {
 
   const fetchPlans = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/pricing/admin/plans', {
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/pricing/admin/plans`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -98,9 +100,10 @@ const AdminPricing = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const apiConfig = getApiConfig();
       const url = editingPlan 
-        ? `http://localhost:5000/api/pricing/admin/plans/${editingPlan._id}`
-        : 'http://localhost:5000/api/pricing/admin/plans';
+        ? `${apiConfig.baseURL}/api/pricing/admin/plans/${editingPlan._id}`
+        : `${apiConfig.baseURL}/api/pricing/admin/plans`;
       
       const method = editingPlan ? 'PUT' : 'POST';
       
@@ -146,7 +149,8 @@ const AdminPricing = () => {
   const handleDelete = async (planId) => {
     if (window.confirm('Are you sure you want to delete this pricing plan?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/pricing/admin/plans/${planId}`, {
+        const apiConfig = getApiConfig();
+        await axios.delete(`${apiConfig.baseURL}/api/pricing/admin/plans/${planId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -162,7 +166,8 @@ const AdminPricing = () => {
   const handleInitializeDefault = async () => {
     if (window.confirm('Initialize default pricing plans? This will create the basic pricing structure.')) {
       try {
-        await axios.post('http://localhost:5000/api/pricing/admin/initialize', {}, {
+        const apiConfig = getApiConfig();
+        await axios.post(`${apiConfig.baseURL}/api/pricing/admin/initialize`, {}, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Container, Row, Col, Alert } from 'react-bootstrap';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import getApiConfig from '../../config/api';
 import './Pricing.css';
 
 function Pricing() {
@@ -18,7 +19,8 @@ function Pricing() {
 
   const fetchPricingPlans = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/pricing/plans');
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/pricing/plans`);
       setPricingPlans(response.data);
     } catch (err) {
       setError('Failed to load pricing plans');
@@ -39,8 +41,9 @@ function Pricing() {
     setMessage('');
 
     try {
+      const apiConfig = getApiConfig();
       const response = await axios.post(
-        'http://localhost:5000/api/auth/upgrade-premium',
+        `${apiConfig.baseURL}/api/auth/upgrade-premium`,
         { plan: plan.toLowerCase() },
         {
           headers: {

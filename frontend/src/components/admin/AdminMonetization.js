@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import getApiConfig from '../../config/api';
 
 const AdminMonetization = () => {
   const [loading, setLoading] = useState(true);
@@ -39,7 +40,8 @@ const AdminMonetization = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.get('http://localhost:5000/api/monetization/admin/overview', {
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/monetization/admin/overview`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -56,12 +58,13 @@ const AdminMonetization = () => {
   const fetchEarnings = async () => {
     setEarningsLoading(true);
     try {
+      const apiConfig = getApiConfig();
       const params = new URLSearchParams();
       params.append('page', currentPage);
       params.append('limit', '20');
       if (filterStatus) params.append('status', filterStatus);
 
-      const response = await axios.get(`http://localhost:5000/api/monetization/admin/earnings?${params}`, {
+      const response = await axios.get(`${apiConfig.baseURL}/api/monetization/admin/earnings?${params}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -78,24 +81,26 @@ const AdminMonetization = () => {
   const fetchCreators = async () => {
     setCreatorsLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/monetization/admin/creators-summary', {
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/monetization/admin/creators-summary`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
       setCreators(response.data);
-    } catch (err) {
-      console.error('Failed to load creators:', err);
-    } finally {
-      setCreatorsLoading(false);
-    }
-  };
+      } catch (err) {
+        console.error('Failed to load creators:', err);
+      } finally {
+        setCreatorsLoading(false);
+      }
+    };
 
   const updateEarningStatus = async (earningId, status, notes = '', transactionId = '') => {
     setUpdateLoading(prev => ({ ...prev, [earningId]: true }));
     try {
+      const apiConfig = getApiConfig();
       const response = await axios.put(
-        `http://localhost:5000/api/monetization/admin/earnings/${earningId}`,
+        `${apiConfig.baseURL}/api/monetization/admin/earnings/${earningId}`,
         { status, notes, transactionId },
         {
           headers: {

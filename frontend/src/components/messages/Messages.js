@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import io from 'socket.io-client';
 import VerificationTick from '../common/VerificationTick';
+import getApiConfig from '../../config/api';
 import './Messages.css';
 
 const Messages = () => {
@@ -29,7 +30,8 @@ const Messages = () => {
   useEffect(() => {
     if (user) {
       console.log('Initializing socket connection for user:', user);
-      const newSocket = io('http://localhost:5000');
+      const apiConfig = getApiConfig();
+      const newSocket = io(apiConfig.socketURL);
       setSocket(newSocket);
 
       // Join user's messages room

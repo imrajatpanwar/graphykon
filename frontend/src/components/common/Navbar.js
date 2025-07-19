@@ -12,6 +12,7 @@ import UIUXIcon from '../image/UI_UX_Design.svg';
 import IllustrationIcon from '../image/illustrake.svg';
 import Art3DIcon from '../image/3D_Art.svg';
 import ArrowRightIcon from '../image/arrow_right.svg';
+import getApiConfig from '../../config/api';
 
 function Navbar() {
   const { user, isAdmin, logout } = useAuth();
@@ -52,7 +53,8 @@ function Navbar() {
     const fetchCreatorStatus = async () => {
       if (user) {
         try {
-          const response = await axios.get('http://localhost:5000/api/creator/profile', {
+          const apiConfig = getApiConfig();
+          const response = await axios.get(`${apiConfig.baseURL}/api/creator/profile`, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`
             }

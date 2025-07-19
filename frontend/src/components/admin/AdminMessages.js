@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import io from 'socket.io-client';
+import getApiConfig from '../../config/api';
 import './AdminMessages.css';
 
 const AdminMessages = () => {
@@ -24,7 +25,8 @@ const AdminMessages = () => {
   // Initialize socket connection
   useEffect(() => {
     if (user) {
-      const newSocket = io('http://localhost:5000');
+      const apiConfig = getApiConfig();
+      const newSocket = io(apiConfig.socketURL);
 
       newSocket.emit('join-admin-room');
 

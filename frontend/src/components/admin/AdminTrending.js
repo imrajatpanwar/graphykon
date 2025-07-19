@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Form, Alert, Modal, Badge, Spinner } from 'react-bootstrap';
 import axios from 'axios';
+import getApiConfig from '../../config/api';
 
 const AdminTrending = () => {
   const [assets, setAssets] = useState([]);
@@ -19,7 +20,8 @@ const AdminTrending = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:5000/api/admin/trending/manage`, {
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/admin/trending/manage`, {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           page: currentPage,
@@ -70,16 +72,17 @@ const AdminTrending = () => {
     try {
       const token = localStorage.getItem('token');
       
+      const apiConfig = getApiConfig();
       if (modalAction === 'add') {
         await axios.post(
-          `http://localhost:5000/api/admin/trending/add/${selectedAsset._id}`,
+          `${apiConfig.baseURL}/api/admin/trending/add/${selectedAsset._id}`,
           { order: trendingCount + 1 },
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setSuccess('Asset added to trending successfully');
       } else if (modalAction === 'remove') {
         await axios.delete(
-          `http://localhost:5000/api/admin/trending/remove/${selectedAsset._id}`,
+          `${apiConfig.baseURL}/api/admin/trending/remove/${selectedAsset._id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setSuccess('Asset removed from trending successfully');
@@ -162,7 +165,7 @@ const AdminTrending = () => {
                   <tr key={asset._id}>
                     <td>
                       <img
-                        src={asset.showcaseImages?.[0] ? `http://localhost:5000/${asset.showcaseImages[0]}` : 'https://via.placeholder.com/60x40?text=No+Image'}
+                        src={asset.showcaseImages?.[0] ? `${getApiConfig().baseURL}/${asset.showcaseImages[0]}` : 'https://via.placeholder.com/60x40?text=No+Image'}
                         alt={asset.title}
                         style={{ width: 60, height: 40, objectFit: 'cover', borderRadius: '4px' }}
                       />

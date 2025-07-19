@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import getApiConfig from '../../config/api';
 
 const MessageTest = () => {
   const { user } = useAuth();
@@ -81,7 +82,8 @@ const MessageTest = () => {
   const testSocketConnection = () => {
     console.log('Testing socket connection...');
     
-    const socket = new WebSocket('ws://localhost:5000');
+    const apiConfig = getApiConfig();
+    const socket = new WebSocket(apiConfig.socketURL.replace('http', 'ws'));
     
     socket.onopen = () => {
       console.log('Socket connection opened');
