@@ -27,15 +27,6 @@ const AdminMonetization = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    fetchOverview();
-    if (activeTab === 'earnings') {
-      fetchEarnings();
-    } else if (activeTab === 'creators') {
-      fetchCreators();
-    }
-  }, [activeTab, filterStatus, currentPage, fetchEarnings, fetchCreators]);
-
   const fetchOverview = async () => {
     setLoading(true);
     setError('');
@@ -94,6 +85,15 @@ const AdminMonetization = () => {
         setCreatorsLoading(false);
       }
     }, []);
+
+  useEffect(() => {
+    fetchOverview();
+    if (activeTab === 'earnings') {
+      fetchEarnings();
+    } else if (activeTab === 'creators') {
+      fetchCreators();
+    }
+  }, [activeTab, filterStatus, currentPage, fetchEarnings, fetchCreators]);
 
   const updateEarningStatus = async (earningId, status, notes = '', transactionId = '') => {
     setUpdateLoading(prev => ({ ...prev, [earningId]: true }));
