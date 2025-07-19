@@ -1,38 +1,21 @@
-// API Configuration for different environments
+// API Configuration - Always use live server
 
 const getApiConfig = () => {
-  // Check if we're in development (localhost)
-  const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  
-  // Get base URL based on environment
-  let baseURL;
-  let socketURL;
-  
-  if (isDevelopment) {
-    // Local development
-    baseURL = 'http://localhost:5000';
-    socketURL = 'http://localhost:5000';
-  } else {
-    // Production deployment (any domain or IP)
-    // Use the same domain/port as frontend
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    baseURL = `${protocol}//${hostname}:5000`;
-    socketURL = `${protocol}//${hostname}:5000`;
-  }
+  // Always use the live server
+  const baseURL = 'http://89.117.58.204:5000';
+  const socketURL = 'http://89.117.58.204:5000';
   
   console.log('API Config:', {
     hostname: window.location.hostname,
-    protocol: window.location.protocol,
     baseURL,
     socketURL,
-    environment: isDevelopment ? 'development' : 'production'
+    environment: 'production'
   });
   
   return {
     baseURL,
     socketURL,
-    environment: isDevelopment ? 'development' : 'production',
+    environment: 'production',
     withCredentials: true
   };
 };
