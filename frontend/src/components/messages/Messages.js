@@ -31,12 +31,40 @@ const Messages = () => {
     if (user) {
       console.log('Initializing socket connection for user:', user);
       const apiConfig = getApiConfig();
-      const newSocket = io(apiConfig.socketURL);
-      setSocket(newSocket);
+      const newSocket = io(apiConfig.socketURL, {
+        withCredentials: true,
+        transports: ['polling', 'websocket'],
+        timeout: 20000,
+        forceNew: true,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000
+      });
 
-      // Join user's messages room
-      newSocket.emit('join-messages-room', user.id);
-      console.log('Joined messages room for user:', user.id);
+      // Socket event handlers
+      newSocket.on('connect', () => {
+        console.log('Messages Socket.IO connected:', newSocket.id);
+        // Join user's messages room after connection
+        newSocket.emit('join-messages-room', user.id);
+        console.log('Joined messages room for user:', user.id);
+      });
+
+      newSocket.on('connect_error', (error) => {
+        console.error('Messages Socket.IO connection error:', error);
+      });
+
+      newSocket.on('disconnect', (reason) => {
+        console.log('Messages Socket.IO disconnected:', reason);
+      });
+
+      newSocket.on('reconnect', (attemptNumber) => {
+        console.log('Messages Socket.IO reconnected after', attemptNumber, 'attempts');
+        // Rejoin room after reconnection
+        newSocket.emit('join-messages-room', user.id);
+      });
+
+      setSocket(newSocket);
 
       // Listen for new messages
       newSocket.on('new-message', (data) => {

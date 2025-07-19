@@ -22,9 +22,14 @@ const io = socketIo(server, {
       'http://89.117.58.204:3000',
       'https://89.117.58.204:3000'
     ],
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  },
+  transports: ['polling', 'websocket'],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
 // Visitor tracking store (for real-time data)

@@ -26,15 +26,41 @@ export const AuthProvider = ({ children }) => {
   // Initialize socket connection
   useEffect(() => {
     const newSocket = io(apiConfig.socketURL, {
-      withCredentials: true
+      withCredentials: true,
+      transports: ['polling', 'websocket'],
+      timeout: 20000,
+      forceNew: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000
+    });
+
+    // Socket event handlers
+    newSocket.on('connect', () => {
+      console.log('Socket.IO connected:', newSocket.id);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('Socket.IO connection error:', error);
+    });
+
+    newSocket.on('disconnect', (reason) => {
+      console.log('Socket.IO disconnected:', reason);
+    });
+
+    newSocket.on('reconnect', (attemptNumber) => {
+      console.log('Socket.IO reconnected after', attemptNumber, 'attempts');
     });
 
     setSocket(newSocket);
 
     return () => {
-      newSocket.close();
+      if (newSocket) {
+        newSocket.close();
+      }
     };
-  }, []);
+  }, [apiConfig.socketURL]);
 
   // Track visitor activity
   useEffect(() => {

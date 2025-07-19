@@ -26,9 +26,35 @@ const AdminMessages = () => {
   useEffect(() => {
     if (user) {
       const apiConfig = getApiConfig();
-      const newSocket = io(apiConfig.socketURL);
+      const newSocket = io(apiConfig.socketURL, {
+        withCredentials: true,
+        transports: ['polling', 'websocket'],
+        timeout: 20000,
+        forceNew: true,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000
+      });
 
-      newSocket.emit('join-admin-room');
+      // Socket event handlers
+      newSocket.on('connect', () => {
+        console.log('Admin Messages Socket.IO connected:', newSocket.id);
+        newSocket.emit('join-admin-room');
+      });
+
+      newSocket.on('connect_error', (error) => {
+        console.error('Admin Messages Socket.IO connection error:', error);
+      });
+
+      newSocket.on('disconnect', (reason) => {
+        console.log('Admin Messages Socket.IO disconnected:', reason);
+      });
+
+      newSocket.on('reconnect', (attemptNumber) => {
+        console.log('Admin Messages Socket.IO reconnected after', attemptNumber, 'attempts');
+        newSocket.emit('join-admin-room');
+      });
 
       // Listen for real-time updates
       newSocket.on('admin-messages-moderated', (data) => {
@@ -42,7 +68,9 @@ const AdminMessages = () => {
       });
 
       return () => {
-        newSocket.disconnect();
+        if (newSocket) {
+          newSocket.disconnect();
+        }
       };
     }
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
