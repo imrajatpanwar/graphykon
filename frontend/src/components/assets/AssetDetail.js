@@ -198,6 +198,7 @@ function AssetDetail() {
       }
       
       // Fallback to direct link method (for cases where counting fails but file is available)
+      const apiConfig = getApiConfig();
       const link = document.createElement('a');
       link.href = `${apiConfig.baseURL}/${asset.assetFile}`;
       link.download = asset.title || 'asset';

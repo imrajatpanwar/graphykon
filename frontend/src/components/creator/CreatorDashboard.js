@@ -8,6 +8,7 @@ import { MdDelete } from 'react-icons/md';
 import { FaCamera } from 'react-icons/fa';
 import VerificationTick from '../common/VerificationTick';
 import Messages from '../messages/Messages';
+import getApiConfig from '../../config/api';
 import './CreatorDashboard.css';
 
 const sidebarItems = [

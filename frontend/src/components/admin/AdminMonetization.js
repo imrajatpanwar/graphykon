@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import getApiConfig from '../../config/api';
 
@@ -34,7 +34,7 @@ const AdminMonetization = () => {
     } else if (activeTab === 'creators') {
       fetchCreators();
     }
-  }, [activeTab, filterStatus, currentPage]);
+  }, [activeTab, filterStatus, currentPage, fetchEarnings, fetchCreators]);
 
   const fetchOverview = async () => {
     setLoading(true);
@@ -55,7 +55,7 @@ const AdminMonetization = () => {
     }
   };
 
-  const fetchEarnings = async () => {
+  const fetchEarnings = useCallback(async () => {
     setEarningsLoading(true);
     try {
       const apiConfig = getApiConfig();
@@ -76,9 +76,9 @@ const AdminMonetization = () => {
     } finally {
       setEarningsLoading(false);
     }
-  };
+  }, [currentPage, filterStatus]);
 
-  const fetchCreators = async () => {
+  const fetchCreators = useCallback(async () => {
     setCreatorsLoading(true);
     try {
       const apiConfig = getApiConfig();
@@ -93,7 +93,7 @@ const AdminMonetization = () => {
       } finally {
         setCreatorsLoading(false);
       }
-    };
+    }, []);
 
   const updateEarningStatus = async (earningId, status, notes = '', transactionId = '') => {
     setUpdateLoading(prev => ({ ...prev, [earningId]: true }));
