@@ -152,7 +152,8 @@ function CreatorDashboard() {
     try {
       const currentUserId = user?._id || user?.id;
       if (!currentUserId) return; // Don't fetch if no user
-      const response = await axios.get(`http://localhost:5000/api/auth/user/${currentUserId}`, {
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/auth/user/${currentUserId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -171,10 +172,11 @@ function CreatorDashboard() {
     setMonetizationLoading(true);
     setMonetizationError('');
     try {
+      const apiConfig = getApiConfig();
       const token = localStorage.getItem('token');
       console.log('Fetching monetization data with token:', token ? 'Present' : 'Missing');
       
-      const response = await axios.get('http://localhost:5000/api/monetization/overview', {
+      const response = await axios.get(`${apiConfig.baseURL}/api/monetization/overview`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -194,8 +196,9 @@ function CreatorDashboard() {
   const fetchEarningsHistory = useCallback(async () => {
     setEarningsHistoryLoading(true);
     try {
+      const apiConfig = getApiConfig();
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/monetization/earnings-history', {
+      const response = await axios.get(`${apiConfig.baseURL}/api/monetization/earnings-history`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -213,8 +216,9 @@ function CreatorDashboard() {
   const fetchAssetsSummary = useCallback(async () => {
     setAssetsSummaryLoading(true);
     try {
+      const apiConfig = getApiConfig();
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/monetization/assets-summary', {
+      const response = await axios.get(`${apiConfig.baseURL}/api/monetization/assets-summary`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -318,8 +322,9 @@ function CreatorDashboard() {
     setEditError('');
     setEditSuccess('');
     try {
+      const apiConfig = getApiConfig();
       const response = await axios.put(
-        'http://localhost:5000/api/creator/profile',
+        `${apiConfig.baseURL}/api/creator/profile`,
         editData,
         {
           headers: {
@@ -437,7 +442,8 @@ function CreatorDashboard() {
       formData.append('creditRequired', uploadData.creditRequired);
       formData.append('creditText', uploadData.creditText);
 
-      await axios.post('http://localhost:5000/api/creator/upload-asset', formData, {
+      const apiConfig = getApiConfig();
+      await axios.post(`${apiConfig.baseURL}/api/creator/upload-asset`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -565,8 +571,9 @@ function CreatorDashboard() {
         });
       }
 
+      const apiConfig = getApiConfig();
       await axios.put(
-        `http://localhost:5000/api/creator/assets/${editAsset._id}`,
+        `${apiConfig.baseURL}/api/creator/assets/${editAsset._id}`,
         formData,
         {
           headers: {
@@ -595,7 +602,8 @@ function CreatorDashboard() {
     setDeleteAssetLoading(true);
     setDeleteAssetError('');
     try {
-      await axios.delete(`http://localhost:5000/api/creator/assets/${deleteAssetId}`, {
+      const apiConfig = getApiConfig();
+      await axios.delete(`${apiConfig.baseURL}/api/creator/assets/${deleteAssetId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -652,7 +660,8 @@ function CreatorDashboard() {
     try {
       console.log('Token:', token ? 'Present' : 'Missing');
       
-      const res = await axios.put('http://localhost:5000/api/creator/profile/cover-image', formData, {
+      const apiConfig = getApiConfig();
+      const res = await axios.put(`${apiConfig.baseURL}/api/creator/profile/cover-image`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
@@ -775,7 +784,7 @@ function CreatorDashboard() {
               }}>
                 {user?.profileImage ? (
                   <img 
-                    src={`http://localhost:5000/${user.profileImage}`} 
+                    src={`${getApiConfig().baseURL}/${user.profileImage}`} 
                     alt="Profile" 
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
@@ -1126,7 +1135,7 @@ function CreatorDashboard() {
                             <tr key={asset._id}>
                               <td>
                                 {asset.showcaseImages && asset.showcaseImages.length > 0 ? (
-                                  <img src={`http://localhost:5000/${asset.showcaseImages[0]}`} alt="showcase" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8 }} />
+                                  <img src={`${getApiConfig().baseURL}/${asset.showcaseImages[0]}`} alt="showcase" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8 }} />
                                 ) : (
                                   <span className="text-muted">No image</span>
                                 )}
@@ -1136,7 +1145,7 @@ function CreatorDashboard() {
                               <td>{asset.keywords}</td>
                               <td>
                                 {asset.assetFile ? (
-                                  <a href={`http://localhost:5000/${asset.assetFile}`} target="_blank" rel="noopener noreferrer">Download</a>
+                                  <a href={`${getApiConfig().baseURL}/${asset.assetFile}`} target="_blank" rel="noopener noreferrer">Download</a>
                                 ) : (
                                   <span className="text-muted">No file</span>
                                 )}
@@ -1795,7 +1804,7 @@ function CreatorDashboard() {
                                     <div className="d-flex align-items-center">
                                       {asset.showcaseImages && asset.showcaseImages.length > 0 && (
                                         <img 
-                                          src={`http://localhost:5000/${asset.showcaseImages[0]}`} 
+                                          src={`${getApiConfig().baseURL}/${asset.showcaseImages[0]}`} 
                                           alt={asset.title}
                                           style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4, marginRight: 12 }}
                                         />
@@ -1852,7 +1861,7 @@ function CreatorDashboard() {
                             <div key={asset._id} className="d-flex align-items-center p-3 border rounded">
                               {asset.showcaseImages && asset.showcaseImages.length > 0 && (
                                 <img 
-                                  src={`http://localhost:5000/${asset.showcaseImages[0]}`} 
+                                  src={`${getApiConfig().baseURL}/${asset.showcaseImages[0]}`} 
                                   alt={asset.title}
                                   style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 8, marginRight: 16 }}
                                 />
@@ -2029,7 +2038,7 @@ function CreatorDashboard() {
                                   <div className="d-flex align-items-center">
                                     {asset.coverPage && (
                                       <img 
-                                        src={`http://localhost:5000/${asset.coverPage}`} 
+                                        src={`${getApiConfig().baseURL}/${asset.coverPage}`} 
                                         alt={asset.title}
                                         style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4, marginRight: 12 }}
                                       />
@@ -2255,7 +2264,7 @@ function CreatorDashboard() {
           <div className="studio-settings">
             <div className="profile-header">
               <div className="cover-image-container">
-                {user.coverImage ? <img src={`http://localhost:5000/${user.coverImage}`} alt="Cover" className="cover-image" /> : <div className="cover-image-placeholder"></div>}
+                {user.coverImage ? <img src={`${getApiConfig().baseURL}/${user.coverImage}`} alt="Cover" className="cover-image" /> : <div className="cover-image-placeholder"></div>}
                 {user.username && <span className="cover-username">@{user.username}</span>}
                 <div className="cover-image-upload">
                   <input 
@@ -2353,7 +2362,7 @@ function CreatorDashboard() {
               )}
               <div className="profile-info">
                 <div className="profile-picture-container">
-                  {user.profileImage ? <img src={`http://localhost:5000/${user.profileImage}`} alt={user.displayName} className="profile-picture" /> : <div className="profile-picture-placeholder"></div>}
+                  {user.profileImage ? <img src={`${getApiConfig().baseURL}/${user.profileImage}`} alt={user.displayName} className="profile-picture" /> : <div className="profile-picture-placeholder"></div>}
                 </div>
                 <div className="profile-details">
                   <h2 className="d-flex align-items-center">
@@ -2381,7 +2390,7 @@ function CreatorDashboard() {
             <div className="assets-grid">
               {uploads.slice(0, 4).map(asset => (
                 <Card key={asset._id}>
-                  <Card.Img variant="top" src={asset.showcaseImages && asset.showcaseImages.length > 0 ? `http://localhost:5000/${asset.showcaseImages[0]}` : 'https://via.placeholder.com/300x150?text=No+Image'} style={{ height: '150px', objectFit: 'cover' }} />
+                  <Card.Img variant="top" src={asset.showcaseImages && asset.showcaseImages.length > 0 ? `${getApiConfig().baseURL}/${asset.showcaseImages[0]}` : 'https://via.placeholder.com/300x150?text=No+Image'} style={{ height: '150px', objectFit: 'cover' }} />
                   <Card.Body>
                     <Card.Title>{asset.title}</Card.Title>
                   </Card.Body>

@@ -146,11 +146,12 @@ function CreatorPublicProfile() {
 
     setFollowLoading(true);
     try {
+      const apiConfig = getApiConfig();
       const token = localStorage.getItem('token');
       const endpoint = isFollowing ? 'unfollow' : 'follow';
       
       await axios.post(
-        `http://localhost:5000/api/creator/${endpoint}/${username}`,
+        `${apiConfig.baseURL}/api/creator/${endpoint}/${username}`,
         {},
         {
           headers: {
@@ -205,8 +206,9 @@ function CreatorPublicProfile() {
         return;
       }
 
+      const apiConfig = getApiConfig();
       const response = await axios.post(
-        `http://localhost:5000/api/messages/conversations/start`,
+        `${apiConfig.baseURL}/api/messages/conversations/start`,
         { receiverId: creator._id },
         {
           headers: {
@@ -279,8 +281,9 @@ function CreatorPublicProfile() {
       console.log('Auth token:', token ? 'Token exists' : 'No token found');
       
       // Submit review to backend
+      const apiConfig = getApiConfig();
       const response = await axios.post(
-        `http://localhost:5000/api/reviews`,
+        `${apiConfig.baseURL}/api/reviews`,
         {
           creatorUsername: username,
           rating: reviewForm.rating,
@@ -369,7 +372,7 @@ function CreatorPublicProfile() {
         <div 
           className={`position-relative creator-cover-section ${!creator.coverImage ? 'creator-cover-fallback' : ''}`}
           style={creator.coverImage ? {
-            backgroundImage: `url(http://localhost:5000/${creator.coverImage})`
+            backgroundImage: `url(${getApiConfig().baseURL}/${creator.coverImage})`
           } : {}}
         >
           {/* Username in bottom right */}
@@ -382,7 +385,7 @@ function CreatorPublicProfile() {
           {/* Profile Picture positioned at bottom left */}
           <div className="position-absolute creator-profile-picture">
             <img
-              src={creator.profileImage ? `http://localhost:5000/${creator.profileImage}` : 'https://via.placeholder.com/120'}
+              src={creator.profileImage ? `${getApiConfig().baseURL}/${creator.profileImage}` : 'https://via.placeholder.com/120'}
               alt={creator.displayName}
               className="rounded-circle border border-white border-4 creator-profile-picture"
             />
@@ -557,7 +560,7 @@ function CreatorPublicProfile() {
                         <div className="position-relative rounded overflow-hidden creator-asset-card" style={{ height: '150px' }}>
                           {asset.showcaseImages && asset.showcaseImages.length > 0 ? (
                             <img
-                              src={`http://localhost:5000/${asset.showcaseImages[0]}`}
+                              src={`${getApiConfig().baseURL}/${asset.showcaseImages[0]}`}
                               alt={asset.title}
                               className="w-100 h-100"
                               style={{ objectFit: 'cover' }}
@@ -621,7 +624,7 @@ function CreatorPublicProfile() {
                     <div className="position-relative rounded overflow-hidden creator-asset-card">
                       {asset.showcaseImages && asset.showcaseImages.length > 0 ? (
                         <img
-                          src={`http://localhost:5000/${asset.showcaseImages[0]}`}
+                          src={`${getApiConfig().baseURL}/${asset.showcaseImages[0]}`}
                           alt={asset.title}
                           className="w-100 h-100"
                           style={{ objectFit: 'cover' }}
@@ -750,7 +753,7 @@ function CreatorPublicProfile() {
                     </p>
                     <div className="reviewer-info d-flex align-items-center">
                       <img 
-                        src={review.reviewer?.profileImage ? `http://localhost:5000/${review.reviewer.profileImage}` : 'https://via.placeholder.com/40'} 
+                        src={review.reviewer?.profileImage ? `${getApiConfig().baseURL}/${review.reviewer.profileImage}` : 'https://via.placeholder.com/40'} 
                         alt={review.reviewer?.displayName || review.reviewer?.username} 
                         className="reviewer-avatar me-2" 
                       />

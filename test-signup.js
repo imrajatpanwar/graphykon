@@ -4,7 +4,7 @@ async function testSignup() {
   console.log('🧪 Testing Signup Functionality');
   console.log('================================\n');
 
-  const baseURL = 'http://localhost:5000';
+  const baseURL = 'http://89.117.58.204:5000';
   const testUser = {
     name: 'Test User',
     email: `test${Date.now()}@example.com`,
@@ -60,7 +60,7 @@ async function testServerConnectivity() {
   console.log('🔌 Testing server connectivity...');
   
   try {
-    const response = await axios.get('http://localhost:5000/api');
+    const response = await axios.get('http://89.117.58.204:5000/api');
     console.log('✅ Server is responding:', response.data.message);
     return true;
   } catch (error) {

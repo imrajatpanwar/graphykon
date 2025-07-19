@@ -37,7 +37,7 @@ async function checkMongoDBConnection() {
 async function testServerEndpoints() {
   console.log('\n2. Testing Server Endpoints...');
   
-  const baseURL = 'http://localhost:5000';
+  const baseURL = 'http://89.117.58.204:5000';
   
   try {
     // Test if server is running

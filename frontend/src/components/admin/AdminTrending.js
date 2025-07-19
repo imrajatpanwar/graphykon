@@ -273,7 +273,7 @@ const AdminTrending = () => {
               </p>
               <div className="d-flex align-items-center">
                 <img
-                  src={selectedAsset.showcaseImages?.[0] ? `http://localhost:5000/${selectedAsset.showcaseImages[0]}` : 'https://via.placeholder.com/60x40?text=No+Image'}
+                  src={selectedAsset.showcaseImages?.[0] ? `${getApiConfig().baseURL}/${selectedAsset.showcaseImages[0]}` : 'https://via.placeholder.com/60x40?text=No+Image'}
                   alt={selectedAsset.title}
                   style={{ width: 60, height: 40, objectFit: 'cover', borderRadius: '4px', marginRight: '10px' }}
                 />
