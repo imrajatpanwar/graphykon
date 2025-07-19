@@ -54,8 +54,9 @@ function Creator() {
       }
       try {
         setCheckingUsername(true);
+        const apiConfig = getApiConfig();
         const response = await axios.post(
-          'http://localhost:5000/api/creator/check-username',
+          `${apiConfig.baseURL}/api/creator/check-username`,
           { username },
           {
             headers: {
@@ -86,7 +87,8 @@ function Creator() {
     // Fetch existing profile data when component mounts
     const fetchProfile = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/creator/profile', {
+        const apiConfig = getApiConfig();
+        const response = await axios.get(`${apiConfig.baseURL}/api/creator/profile`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -100,7 +102,7 @@ function Creator() {
           phoneNumber: phoneNumber || ''
         }));
         if (profileImage) {
-          setPreviewImage(`http://localhost:5000/${profileImage}`);
+          setPreviewImage(`${apiConfig.baseURL}/${profileImage}`);
         }
       } catch (err) {
         setError('Failed to load profile data');
@@ -149,8 +151,9 @@ function Creator() {
         }
       });
 
+      const apiConfig = getApiConfig();
       const response = await axios.put(
-        'http://localhost:5000/api/creator/profile',
+        `${apiConfig.baseURL}/api/creator/profile`,
         formDataToSend,
         {
           headers: {
@@ -162,7 +165,7 @@ function Creator() {
 
       // Update preview image if a new one was uploaded
       if (response.data.profileImage) {
-        setPreviewImage(`http://localhost:5000/${response.data.profileImage}`);
+        setPreviewImage(`${apiConfig.baseURL}/${response.data.profileImage}`);
       }
 
       setSuccess('Profile updated successfully! Your changes have been saved.');
