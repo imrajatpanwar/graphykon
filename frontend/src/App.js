@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { debugConnectionIssues } from './utils/serverCheck';
 import Navbar from './components/common/Navbar';
 import Home from './components/common/Home';
 import Login from './components/auth/Login';
@@ -19,6 +20,19 @@ import MessageTest from './components/messages/MessageTest';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
+  // Debug server connection on app startup
+  useEffect(() => {
+    const runDebug = async () => {
+      try {
+        await debugConnectionIssues();
+      } catch (error) {
+        console.error('Debug check failed:', error);
+      }
+    };
+    
+    runDebug();
+  }, []);
+
   return (
     <Router>
       <AuthProvider>

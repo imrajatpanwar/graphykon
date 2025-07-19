@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import io from 'socket.io-client';
+import getApiConfig from '../config/api';
 
 const AuthContext = createContext(null);
 
@@ -15,14 +16,16 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Get API configuration based on current environment
+  const apiConfig = getApiConfig();
+  
   // Configure axios defaults
-  axios.defaults.baseURL = process.env.NODE_ENV === 'production' ? 'http://89.117.58.204:5000' : 'http://localhost:5000';
-  axios.defaults.withCredentials = true;
+  axios.defaults.baseURL = apiConfig.baseURL;
+  axios.defaults.withCredentials = apiConfig.withCredentials;
 
   // Initialize socket connection
   useEffect(() => {
-    const socketUrl = process.env.NODE_ENV === 'production' ? 'http://89.117.58.204:5000' : 'http://localhost:5000';
-    const newSocket = io(socketUrl, {
+    const newSocket = io(apiConfig.socketURL, {
       withCredentials: true
     });
 
