@@ -8,10 +8,10 @@ const getApiConfig = () => {
   let baseURL, socketURL;
   
   if (isDomain) {
-    // If on domain, use the same domain for API (assuming backend is proxied)
+    // If on domain, use the same domain without port (Nginx will proxy)
     const protocol = window.location.protocol;
-    baseURL = `${protocol}//${window.location.hostname}:5000`;
-    socketURL = `${protocol}//${window.location.hostname}:5000`;
+    baseURL = `${protocol}//${window.location.hostname}`;
+    socketURL = `${protocol}//${window.location.hostname}`;
   } else {
     // If on IP or localhost, use the IP directly
     baseURL = 'http://89.117.58.204:5000';
