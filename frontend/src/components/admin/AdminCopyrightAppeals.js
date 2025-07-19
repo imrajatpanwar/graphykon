@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import getApiConfig from '../../config/api';
 import useAdminRealTime from '../../hooks/useAdminRealTime';
 
 const AdminCopyrightAppeals = () => {
@@ -50,7 +51,8 @@ const AdminCopyrightAppeals = () => {
         ...filters
       });
 
-      const response = await axios.get(`/api/admin/copyright-appeals?${queryParams}`, {
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/admin/copyright-appeals?${queryParams}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -208,7 +210,8 @@ const AdminCopyrightAppeals = () => {
         export: 'true'
       });
 
-      const response = await axios.get(`/api/admin/copyright-appeals/export?${queryParams}`, {
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/admin/copyright-appeals/export?${queryParams}`, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob'
       });

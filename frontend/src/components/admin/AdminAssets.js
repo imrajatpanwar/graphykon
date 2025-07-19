@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import getApiConfig from '../../config/api';
 import useAdminRealTime from '../../hooks/useAdminRealTime';
 
 const AdminAssets = () => {
@@ -36,7 +37,8 @@ const AdminAssets = () => {
         license: filters.license
       });
 
-      const response = await axios.get(`/api/admin/assets?${queryParams}`, {
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/admin/assets?${queryParams}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

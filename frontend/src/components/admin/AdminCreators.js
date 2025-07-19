@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import getApiConfig from '../../config/api';
 import useAdminRealTime from '../../hooks/useAdminRealTime';
 import VerificationTick from '../common/VerificationTick';
 
@@ -34,7 +35,8 @@ const AdminCreators = () => {
         isCreator: 'true'
       });
 
-      const response = await axios.get(`/api/admin/users?${queryParams}`, {
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/admin/users?${queryParams}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
