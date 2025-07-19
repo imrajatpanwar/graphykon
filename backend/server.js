@@ -12,7 +12,15 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: ['http://localhost:3000', 'https://graphykon.com', 'https://www.graphykon.com'],
+    origin: [
+      'http://localhost:3000', 
+      'https://graphykon.com', 
+      'https://www.graphykon.com',
+      'http://89.117.58.204',
+      'https://89.117.58.204',
+      'http://89.117.58.204:3000',
+      'https://89.117.58.204:3000'
+    ],
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -39,7 +47,15 @@ if (!require('fs').existsSync(uploadsDir)) {
 // Middleware
 app.use(cookieParser());
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://graphykon.com', 'https://www.graphykon.com'],
+  origin: [
+    'http://localhost:3000', 
+    'https://graphykon.com', 
+    'https://www.graphykon.com',
+    'http://89.117.58.204',
+    'https://89.117.58.204',
+    'http://89.117.58.204:3000',
+    'https://89.117.58.204:3000'
+  ],
   credentials: true
 }));
 app.use(express.json());

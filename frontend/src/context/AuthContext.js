@@ -16,12 +16,12 @@ export const AuthProvider = ({ children }) => {
   const location = useLocation();
 
   // Configure axios defaults
-  axios.defaults.baseURL = process.env.NODE_ENV === 'production' ? 'https://graphykon.com' : 'http://localhost:5000';
+  axios.defaults.baseURL = process.env.NODE_ENV === 'production' ? 'http://89.117.58.204:5000' : 'http://localhost:5000';
   axios.defaults.withCredentials = true;
 
   // Initialize socket connection
   useEffect(() => {
-    const socketUrl = process.env.NODE_ENV === 'production' ? 'https://graphykon.com' : 'http://localhost:5000';
+    const socketUrl = process.env.NODE_ENV === 'production' ? 'http://89.117.58.204:5000' : 'http://localhost:5000';
     const newSocket = io(socketUrl, {
       withCredentials: true
     });
