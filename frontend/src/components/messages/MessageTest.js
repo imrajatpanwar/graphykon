@@ -49,22 +49,23 @@ const MessageTest = () => {
 
   const runAllTests = async () => {
     console.log('Starting comprehensive message API tests...');
+    const apiConfig = getApiConfig();
     
     // Test 1: Check authentication
-    await runTest('AUTH_CHECK', '/api/auth/me');
+    await runTest('AUTH_CHECK', `${apiConfig.baseURL}/api/auth/me`);
     
     // Test 2: Get conversations
-    await runTest('GET_CONVERSATIONS', '/api/messages/conversations');
+    await runTest('GET_CONVERSATIONS', `${apiConfig.baseURL}/api/messages/conversations`);
     
     // Test 3: Get unread count
-    await runTest('GET_UNREAD_COUNT', '/api/messages/unread-count');
+    await runTest('GET_UNREAD_COUNT', `${apiConfig.baseURL}/api/messages/unread-count`);
     
     // Test 4: Search users
-    await runTest('SEARCH_USERS', '/api/messages/search-users?query=test');
+    await runTest('SEARCH_USERS', `${apiConfig.baseURL}/api/messages/search-users?query=test`);
     
     // Test 5: Test send message (if testUserId is provided)
     if (testUserId) {
-      await runTest('SEND_MESSAGE', '/api/messages/send', {
+      await runTest('SEND_MESSAGE', `${apiConfig.baseURL}/api/messages/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

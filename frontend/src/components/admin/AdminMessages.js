@@ -94,7 +94,8 @@ const AdminMessages = () => {
         status: statusFilter
       });
 
-      const response = await fetch(`${endpoint}?${params}`, {
+      const apiConfig = getApiConfig();
+      const response = await fetch(`${apiConfig.baseURL}${endpoint}?${params}`, {
         credentials: 'include'
       });
 
@@ -121,7 +122,8 @@ const AdminMessages = () => {
   // Fetch statistics
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/admin/messages/stats', {
+      const apiConfig = getApiConfig();
+      const response = await fetch(`${apiConfig.baseURL}/api/admin/messages/stats`, {
         credentials: 'include'
       });
 
@@ -162,7 +164,8 @@ const AdminMessages = () => {
   // Moderate single message
   const moderateMessage = async (messageId, action, reason) => {
     try {
-      const response = await fetch(`/api/admin/messages/${messageId}/moderate`, {
+      const apiConfig = getApiConfig();
+      const response = await fetch(`${apiConfig.baseURL}/api/admin/messages/${messageId}/moderate`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -202,7 +205,8 @@ const AdminMessages = () => {
     }
 
     try {
-      const response = await fetch('/api/admin/messages/bulk-moderate', {
+      const apiConfig = getApiConfig();
+      const response = await fetch(`${apiConfig.baseURL}/api/admin/messages/bulk-moderate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -239,7 +243,8 @@ const AdminMessages = () => {
     }
 
     try {
-      const response = await fetch(`/api/admin/messages/${messageId}`, {
+      const apiConfig = getApiConfig();
+      const response = await fetch(`${apiConfig.baseURL}/api/admin/messages/${messageId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -267,12 +272,13 @@ const AdminMessages = () => {
   // Export messages
   const exportMessages = async () => {
     try {
+      const apiConfig = getApiConfig();
       const params = new URLSearchParams({
         status: statusFilter,
         period: '30'
       });
 
-      const response = await fetch(`/api/admin/messages/export?${params}`, {
+      const response = await fetch(`${apiConfig.baseURL}/api/admin/messages/export?${params}`, {
         credentials: 'include'
       });
 

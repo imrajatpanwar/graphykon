@@ -118,7 +118,8 @@ const Messages = () => {
   const fetchConversations = async () => {
     try {
       console.log('Fetching conversations...');
-      const response = await fetch('/api/messages/conversations', {
+      const apiConfig = getApiConfig();
+      const response = await fetch(`${apiConfig.baseURL}/api/messages/conversations`, {
         credentials: 'include'
       });
       console.log('Conversations response status:', response.status);
@@ -145,7 +146,8 @@ const Messages = () => {
   const fetchUnreadCount = async () => {
     try {
       console.log('Fetching unread count...');
-      const response = await fetch('/api/messages/unread-count', {
+      const apiConfig = getApiConfig();
+      const response = await fetch(`${apiConfig.baseURL}/api/messages/unread-count`, {
         credentials: 'include'
       });
       console.log('Unread count response status:', response.status);
@@ -188,7 +190,8 @@ const Messages = () => {
 
     setIsSearchingUsers(true);
     try {
-      const response = await fetch(`/api/messages/search-users?query=${encodeURIComponent(query)}`, {
+      const apiConfig = getApiConfig();
+      const response = await fetch(`${apiConfig.baseURL}/api/messages/search-users?query=${encodeURIComponent(query)}`, {
         credentials: 'include'
       });
       const data = await response.json();
@@ -264,7 +267,8 @@ const Messages = () => {
       }
 
       // Fetch messages
-      const response = await fetch(`/api/messages/conversations/${conversation.conversationId}/messages`, {
+      const apiConfig = getApiConfig();
+      const response = await fetch(`${apiConfig.baseURL}/api/messages/conversations/${conversation.conversationId}/messages`, {
         credentials: 'include'
       });
       const data = await response.json();
@@ -273,7 +277,7 @@ const Messages = () => {
         setMessages(data.messages);
         
         // Mark messages as read
-        await fetch(`/api/messages/conversations/${conversation.conversationId}/read`, {
+        await fetch(`${apiConfig.baseURL}/api/messages/conversations/${conversation.conversationId}/read`, {
           method: 'PUT',
           credentials: 'include'
         });
@@ -332,16 +336,18 @@ const Messages = () => {
         formData.append('messageType', 'file');
         formData.append('attachment', attachment);
 
-        console.log('Sending message with attachment to:', '/api/messages/send-with-attachment');
-        response = await fetch('/api/messages/send-with-attachment', {
+        const apiConfig = getApiConfig();
+        console.log('Sending message with attachment to:', `${apiConfig.baseURL}/api/messages/send-with-attachment`);
+        response = await fetch(`${apiConfig.baseURL}/api/messages/send-with-attachment`, {
           method: 'POST',
           credentials: 'include',
           body: formData
         });
       } else {
         // Send text message
-        console.log('Sending text message to:', '/api/messages/send');
-        response = await fetch('/api/messages/send', {
+        const apiConfig = getApiConfig();
+        console.log('Sending text message to:', `${apiConfig.baseURL}/api/messages/send`);
+        response = await fetch(`${apiConfig.baseURL}/api/messages/send`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -426,7 +432,8 @@ const Messages = () => {
     console.log('Starting conversation with user:', receiverId);
     
     try {
-      const response = await fetch('/api/messages/conversations/start', {
+      const apiConfig = getApiConfig();
+      const response = await fetch(`${apiConfig.baseURL}/api/messages/conversations/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
