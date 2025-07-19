@@ -53,6 +53,24 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Signup error:', error);
+    
+    // Check if it's a MongoDB connection error
+    if (error.name === 'MongoNetworkError' || error.message.includes('ECONNREFUSED')) {
+      return res.status(503).json({ 
+        message: 'Database connection failed. Please try again later.',
+        error: 'MongoDB not available'
+      });
+    }
+    
+    // Check if it's a validation error
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: 'Validation failed',
+        error: error.message
+      });
+    }
+    
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
