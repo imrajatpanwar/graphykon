@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Spinner, Alert, Badge } from 'react-bootstra
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ReactComponent as PremiumIcon } from '../image/premium_tag.svg';
+import getApiConfig from '../../config/api';
 
 function SearchResults() {
   const [searchParams] = useSearchParams();
@@ -24,7 +25,8 @@ function SearchResults() {
       setError('');
       
       try {
-        const response = await axios.get(`http://localhost:5000/api/search?q=${encodeURIComponent(query)}`);
+        const apiConfig = getApiConfig();
+        const response = await axios.get(`${apiConfig.baseURL}/api/search?q=${encodeURIComponent(query)}`);
         setAssets(response.data);
       } catch (error) {
         console.error('Failed to fetch search results:', error);
@@ -96,7 +98,7 @@ function SearchResults() {
                     variant="top"
                     src={
                       asset.showcaseImages && asset.showcaseImages.length > 0
-                        ? `http://localhost:5000/${asset.showcaseImages[0]}`
+                        ? `${getApiConfig().baseURL}/${asset.showcaseImages[0]}`
                         : 'https://via.placeholder.com/300x200?text=No+Image'
                     }
                     style={{ 
@@ -182,7 +184,7 @@ function SearchResults() {
                     >
                       {asset.creator?.profileImage ? (
                         <img
-                          src={`http://localhost:5000/${asset.creator.profileImage}`}
+                          src={`${getApiConfig().baseURL}/${asset.creator.profileImage}`}
                           alt={asset.creator.displayName || asset.creator.username}
                           style={{ 
                             width: '24px', 

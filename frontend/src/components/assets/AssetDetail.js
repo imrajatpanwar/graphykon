@@ -8,6 +8,7 @@ import { ReactComponent as ShareIcon } from '../image/share.svg';
 import { ReactComponent as ViewEyeIcon } from '../image/view_eye.svg';
 import { ReactComponent as PremiumIcon } from '../image/premium_tag.svg';
 import { FaEdit } from 'react-icons/fa';
+import getApiConfig from '../../config/api';
 
 function AssetDetail() {
   const { id } = useParams();
@@ -38,16 +39,18 @@ function AssetDetail() {
       }
       
       try {
+        const apiConfig = getApiConfig();
+        
         // Increment view count only once per asset
         if (!viewCountedRef.current && !isCancelled) {
           viewCountedRef.current = true;
-          await axios.post(`http://localhost:5000/api/assets/${id}/view`);
+          await axios.post(`${apiConfig.baseURL}/api/assets/${id}/view`);
         }
         
         if (isCancelled) return;
         
         // Get asset details
-        const response = await axios.get(`http://localhost:5000/api/assets/${id}`);
+        const response = await axios.get(`${apiConfig.baseURL}/api/assets/${id}`);
         if (!isCancelled) {
           setAsset(response.data);
           setCurrentImageIndex(0); // Reset to first image when asset changes
@@ -78,7 +81,8 @@ function AssetDetail() {
 
   const fetchCreatorProfile = async (creatorId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/auth/user/${creatorId}`);
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/auth/user/${creatorId}`);
       setCreatorProfile(response.data);
     } catch (error) {
       console.error('Failed to fetch creator profile:', error);
@@ -107,8 +111,9 @@ function AssetDetail() {
     });
 
     try {
+      const apiConfig = getApiConfig();
       const endpoint = isFollowing ? 'unfollow' : 'follow';
-      await axios.post(`http://localhost:5000/api/auth/${endpoint}/${creatorId}`, {}, {
+      await axios.post(`${apiConfig.baseURL}/api/auth/${endpoint}/${creatorId}`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       // Re-fetch from server to ensure data is in sync
@@ -132,8 +137,9 @@ function AssetDetail() {
 
     setDownloadLoading(true);
     try {
+      const apiConfig = getApiConfig();
       // Increment download count (with duplicate detection)
-      const downloadResponse = await axios.post(`http://localhost:5000/api/assets/${asset._id}/download`, {}, {
+      const downloadResponse = await axios.post(`${apiConfig.baseURL}/api/assets/${asset._id}/download`, {}, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -157,7 +163,7 @@ function AssetDetail() {
       }
       
       // Fetch the file as blob to force download without preview
-      const response = await fetch(`http://localhost:5000/${asset.assetFile}`);
+      const response = await fetch(`${apiConfig.baseURL}/${asset.assetFile}`);
       const blob = await response.blob();
       
       // Create blob URL and download
@@ -193,7 +199,7 @@ function AssetDetail() {
       
       // Fallback to direct link method (for cases where counting fails but file is available)
       const link = document.createElement('a');
-      link.href = `http://localhost:5000/${asset.assetFile}`;
+      link.href = `${apiConfig.baseURL}/${asset.assetFile}`;
       link.download = asset.title || 'asset';
       link.target = '_blank';
       document.body.appendChild(link);
@@ -280,7 +286,7 @@ function AssetDetail() {
           >
             {asset.showcaseImages && asset.showcaseImages.length > 0 && (
               <img
-                src={`http://localhost:5000/${asset.showcaseImages[currentImageIndex]}`}
+                src={`${getApiConfig().baseURL}/${asset.showcaseImages[currentImageIndex]}`}
                 alt={asset.title}
                 style={{ 
                   width: '100%',
@@ -694,7 +700,7 @@ function AssetDetail() {
                 >
                   {asset.creator?.profileImage ? (
                     <img
-                      src={`http://localhost:5000/${asset.creator.profileImage}`}
+                      src={`${getApiConfig().baseURL}/${asset.creator.profileImage}`}
                       alt={asset.creator.displayName || asset.creator.username}
                       style={{ 
                         width: '48px', 

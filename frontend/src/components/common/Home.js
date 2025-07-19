@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ReactComponent as PremiumIcon } from '../image/premium_tag.svg';
 import { ReactComponent as DownloadIcon } from '../image/Download_Gray.svg';
 import { ReactComponent as TrendingIcon } from '../image/trending.svg';
+import getApiConfig from '../../config/api';
 import './Home.css';
 
 // Skeleton Loading Component
@@ -44,60 +45,64 @@ const SkeletonGrid = ({ count = 5 }) => (
 );
 
 // Asset Card Component
-const AssetCard = ({ asset, onClick, onCreatorClick }) => (
-  <div className="asset-card" onClick={() => onClick(asset)}>
-    <div className="asset-image-container">
-      <img
-        src={asset.showcaseImages && asset.showcaseImages.length > 0 
-          ? `http://localhost:5000/${asset.showcaseImages[0]}` 
-          : 'https://via.placeholder.com/300x200?text=No+Image'}
-        alt={asset.title}
-        className="asset-image"
-      />
-      {asset.license === 'Premium' && (
-        <div 
-          className="premium-badge"
-          onClick={(e) => {
-            e.stopPropagation();
-            // Navigate to pricing page
-          }}
-          title="Premium Asset"
-        >
-          <PremiumIcon style={{ width: '100%', height: '100%' }} />
-        </div>
-      )}
-    </div>
-    <div className="asset-info">
-      {asset.creator?.profileImage && (
+const AssetCard = ({ asset, onClick, onCreatorClick }) => {
+  const apiConfig = getApiConfig();
+  
+  return (
+    <div className="asset-card" onClick={() => onClick(asset)}>
+      <div className="asset-image-container">
         <img
-          src={`http://localhost:5000/${asset.creator.profileImage}`}
-          alt={asset.creator.displayName || asset.creator.username}
-          className="creator-avatar"
+          src={asset.showcaseImages && asset.showcaseImages.length > 0 
+            ? `${apiConfig.baseURL}/${asset.showcaseImages[0]}` 
+            : 'https://via.placeholder.com/300x200?text=No+Image'}
+          alt={asset.title}
+          className="asset-image"
         />
-      )}
-      <div className="asset-details">
-        <h3 className="asset-title">{asset.title}</h3>
-        <div className="asset-meta">
-          <span 
-            className="creator-name"
-            onClick={(e) => onCreatorClick(e, asset.creator?.username)}
+        {asset.license === 'Premium' && (
+          <div 
+            className="premium-badge"
+            onClick={(e) => {
+              e.stopPropagation();
+              // Navigate to pricing page
+            }}
+            title="Premium Asset"
           >
-            {asset.creator?.displayName || asset.creator?.username || 'Unknown'}
-          </span>
-          <div className="asset-stats">
-            <span>
-              <i className="bi bi-eye"></i> {asset.viewCount || 0}
+            <PremiumIcon style={{ width: '100%', height: '100%' }} />
+          </div>
+        )}
+      </div>
+      <div className="asset-info">
+        {asset.creator?.profileImage && (
+          <img
+            src={`${apiConfig.baseURL}/${asset.creator.profileImage}`}
+            alt={asset.creator.displayName || asset.creator.username}
+            className="creator-avatar"
+          />
+        )}
+        <div className="asset-details">
+          <h3 className="asset-title">{asset.title}</h3>
+          <div className="asset-meta">
+            <span 
+              className="creator-name"
+              onClick={(e) => onCreatorClick(e, asset.creator?.username)}
+            >
+              {asset.creator?.displayName || asset.creator?.username || 'Unknown'}
             </span>
-            <span>
-              <DownloadIcon className="download-icon" />
-              {asset.downloadCount || 0}
-            </span>
+            <div className="asset-stats">
+              <span>
+                <i className="bi bi-eye"></i> {asset.viewCount || 0}
+              </span>
+              <span>
+                <DownloadIcon className="download-icon" />
+                {asset.downloadCount || 0}
+              </span>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 function Home() {
   const [assets, setAssets] = useState([]);
@@ -109,14 +114,16 @@ function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const apiConfig = getApiConfig();
+    
     // Fetch trending assets
-    axios.get('http://localhost:5000/api/admin/trending')
+    axios.get(`${apiConfig.baseURL}/api/admin/trending`)
       .then(res => setTrendingAssets(res.data))
       .catch(() => setTrendingError('Failed to load trending assets'))
       .finally(() => setTrendingLoading(false));
 
     // Fetch all assets
-    axios.get('http://localhost:5000/api/assets')
+    axios.get(`${apiConfig.baseURL}/api/assets`)
       .then(res => setAssets(res.data))
       .catch(() => setError('Failed to load assets'))
       .finally(() => setLoading(false));
