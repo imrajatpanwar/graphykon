@@ -108,7 +108,8 @@ function CreatorDashboard() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/creator/profile', {
+        const apiConfig = getApiConfig();
+        const response = await axios.get(`${apiConfig.baseURL}/api/creator/profile`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -129,7 +130,8 @@ function CreatorDashboard() {
     setUploadsLoading(true);
     setUploadsError('');
     try {
-      const response = await axios.get('http://localhost:5000/api/creator/assets', {
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/creator/assets`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }

@@ -3,6 +3,7 @@ import { Form, Button, Card, Alert, Container, Row, Col } from 'react-bootstrap'
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
+import getApiConfig from '../../config/api';
 
 function Creator() {
   const [formData, setFormData] = useState({

@@ -4,6 +4,7 @@ import { Spinner, Button } from 'react-bootstrap';
 import { FaImage } from 'react-icons/fa';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import getApiConfig from '../../config/api';
 import { ReactComponent as ArrowRightIcon } from '../image/arrow_right.svg';
 import VerificationTick from '../common/VerificationTick';
 import { ReactComponent as PremiumIcon } from '../image/premium_tag.svg';
@@ -53,7 +54,8 @@ function CreatorPublicProfile() {
     const fetchCreatorProfile = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:5000/api/creator/public/${username}`);
+        const apiConfig = getApiConfig();
+        const response = await axios.get(`${apiConfig.baseURL}/api/creator/public/${username}`);
         setProfileData(response.data);
         
         // Check if current user is following this creator
@@ -71,7 +73,8 @@ function CreatorPublicProfile() {
     const fetchReviews = async () => {
       try {
         setReviewsLoading(true);
-        const response = await axios.get(`http://localhost:5000/api/reviews/${username}`);
+        const apiConfig = getApiConfig();
+        const response = await axios.get(`${apiConfig.baseURL}/api/reviews/${username}`);
         setReviews(response.data.reviews || []);
       } catch (err) {
         console.error('Failed to fetch reviews:', err);
