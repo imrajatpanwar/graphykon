@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
@@ -8,30 +9,78 @@ const auth = require('../middleware/auth');
 // Register new user
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-
-    // Check if user already exists
-    const userExists = await User.findOne({ $or: [{ email }, { name }] });
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+    console.log('🚀 New user registration attempt:', { name: req.body.name, email: req.body.email });
+    
+    // Check MongoDB connection first
+    if (mongoose.connection.readyState !== 1) {
+      console.error('❌ MongoDB not connected. Connection state:', mongoose.connection.readyState);
+      return res.status(503).json({ 
+        message: 'Database connection failed. Please try again later.',
+        error: 'MongoDB not available',
+        connectionState: mongoose.connection.readyState
+      });
     }
 
+    const { name, email, password } = req.body;
+
+    // Validate input
+    if (!name || !email || !password) {
+      console.log('❌ Missing required fields:', { name: !!name, email: !!email, password: !!password });
+      return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
+
+    console.log('✅ Input validation passed');
+
+    // Check if user already exists
+    console.log('🔍 Checking if user already exists...');
+    const userExists = await User.findOne({ 
+      $or: [
+        { email: email.toLowerCase() }, 
+        { name: name.toLowerCase() }
+      ] 
+    });
+    
+    if (userExists) {
+      console.log('❌ User already exists:', userExists.email);
+      const field = userExists.email === email.toLowerCase() ? 'email' : 'name';
+      return res.status(400).json({ 
+        message: `User with this ${field} already exists`,
+        field 
+      });
+    }
+
+    console.log('✅ User availability check passed');
+
     // Hash password
+    console.log('🔐 Hashing password...');
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+    console.log('✅ Password hashed successfully');
 
     // Create new user
+    console.log('👤 Creating new user...');
     const user = new User({
-      name,
-      email,
-      password: hashedPassword
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password: hashedPassword,
+      role: 'user',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
 
-    await user.save();
+    console.log('💾 Saving user to database...');
+    const savedUser = await user.save();
+    console.log('✅ User saved successfully with ID:', savedUser._id);
 
     // Create token with 24 hour expiration
+    console.log('🎫 Creating JWT token...');
     const token = jwt.sign(
-      { userId: user._id },
+      { userId: savedUser._id },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -44,34 +93,67 @@ router.post('/register', async (req, res) => {
       sameSite: 'strict'
     });
 
+    console.log('🎉 Registration completed successfully for:', savedUser.email);
+
     res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
       token,
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
+        id: savedUser._id,
+        name: savedUser.name,
+        email: savedUser.email,
+        role: savedUser.role,
+        createdAt: savedUser.createdAt
       }
     });
+
   } catch (error) {
-    console.error('Signup error:', error);
+    console.error('❌ Signup error:', error);
+    console.error('Error name:', error.name);
+    console.error('Error code:', error.code);
     
-    // Check if it's a MongoDB connection error
-    if (error.name === 'MongoNetworkError' || error.message.includes('ECONNREFUSED')) {
+    // MongoDB connection errors
+    if (error.name === 'MongoNetworkError' || 
+        error.name === 'MongoServerSelectionError' ||
+        error.message.includes('ECONNREFUSED') ||
+        error.message.includes('connection')) {
+      console.error('❌ Database connection issue detected');
       return res.status(503).json({ 
         message: 'Database connection failed. Please try again later.',
-        error: 'MongoDB not available'
+        error: 'MongoDB not available',
+        details: error.message
       });
     }
     
-    // Check if it's a validation error
+    // Validation errors
     if (error.name === 'ValidationError') {
+      console.error('❌ Validation error:', error.message);
       return res.status(400).json({ 
         message: 'Validation failed',
-        error: error.message
+        error: error.message,
+        details: error.errors
+      });
+    }
+
+    // Duplicate key error
+    if (error.code === 11000) {
+      console.error('❌ Duplicate key error:', error.keyPattern);
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({ 
+        message: `User with this ${field} already exists`,
+        field,
+        error: 'Duplicate entry'
       });
     }
     
-    res.status(500).json({ message: 'Server error', error: error.message });
+    // Generic server error
+    console.error('❌ Unexpected server error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error during registration',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
   }
 });
 

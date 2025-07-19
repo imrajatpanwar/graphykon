@@ -66,30 +66,64 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB Connection with improved error handling and options
 const mongoOptions = {
-  serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+  serverSelectionTimeoutMS: 10000, // Keep trying to send operations for 10 seconds
   socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+  maxPoolSize: 10, // Maintain up to 10 socket connections
+  bufferMaxEntries: 0, // Disable mongoose buffering
+  retryWrites: true,
+  w: 'majority'
 };
 
 // Configure mongoose settings
 mongoose.set('bufferCommands', false); // Disable mongoose buffering
+mongoose.set('bufferMaxEntries', 0); // Disable mongoose buffering for faster failure
 
-console.log('Attempting to connect to MongoDB...');
-mongoose.connect(MONGODB_URI, mongoOptions)
-  .then(() => {
+console.log('🔗 Attempting to connect to MongoDB...');
+console.log('MongoDB URI:', MONGODB_URI.replace(/:([^:@]{8})[^:@]*@/, ':****@'));
+
+// Connection with retry logic
+let connectionAttempts = 0;
+const maxRetries = 3;
+
+const connectToMongoDB = async () => {
+  try {
+    connectionAttempts++;
+    console.log(`📞 Connection attempt ${connectionAttempts}/${maxRetries}...`);
+    
+    await mongoose.connect(MONGODB_URI, mongoOptions);
+    
     console.log('✅ Successfully connected to MongoDB');
-    console.log('Database:', mongoose.connection.db.databaseName);
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err.message);
-    console.log('\n📋 Troubleshooting steps:');
-    console.log('1. Check if MONGODB_URI environment variable is set correctly');
-    console.log('2. For local MongoDB: Make sure MongoDB is running on port 27017');
-    console.log('3. For MongoDB Atlas: Check your connection string, username, password, and IP whitelist');
-    console.log('4. Verify network connectivity to your MongoDB server');
-    console.log('\nCurrent MONGODB_URI:', MONGODB_URI.replace(/:([^:@]{8})[^:@]*@/, ':****@')); // Hide password
-    console.log('\n⚠️  Server will continue running without database connection');
-    console.log('   Some features may not work properly until MongoDB is available');
-  });
+    console.log('📊 Database:', mongoose.connection.db.databaseName);
+    console.log('🌐 Connection state:', mongoose.connection.readyState);
+    
+    // Test the connection with a simple operation
+    const adminDb = mongoose.connection.db.admin();
+    const result = await adminDb.ping();
+    console.log('📡 MongoDB ping successful:', result);
+    
+  } catch (err) {
+    console.error(`❌ MongoDB connection attempt ${connectionAttempts} failed:`, err.message);
+    
+    if (connectionAttempts < maxRetries) {
+      console.log(`⏳ Retrying in 5 seconds...`);
+      setTimeout(connectToMongoDB, 5000);
+    } else {
+      console.error('\n🚨 All MongoDB connection attempts failed!');
+      console.log('\n📋 Troubleshooting steps:');
+      console.log('1. Check if MONGODB_URI environment variable is set correctly');
+      console.log('2. For local MongoDB: Make sure MongoDB is running on port 27017');
+      console.log('3. For MongoDB Atlas: Check your connection string, username, password, and IP whitelist');
+      console.log('4. Verify network connectivity to your MongoDB server');
+      console.log('5. Check if your IP address is whitelisted in MongoDB Atlas');
+      console.log('\nCurrent MONGODB_URI:', MONGODB_URI.replace(/:([^:@]{8})[^:@]*@/, ':****@'));
+      console.log('\n⚠️  Server will continue running without database connection');
+      console.log('⚠️  API endpoints will return 503 errors for database operations');
+    }
+  }
+};
+
+// Start connection
+connectToMongoDB();
 
 // Handle connection events
 mongoose.connection.on('connected', () => {
@@ -668,20 +702,97 @@ app.get('/api', (req, res) => {
 });
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  const connectionStates = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  };
+  
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = connectionStates[dbState] || 'unknown';
+  
+  let dbTest = null;
+  try {
+    if (dbState === 1) {
+      // Test database with a simple operation
+      const adminDb = mongoose.connection.db.admin();
+      await adminDb.ping();
+      dbTest = 'success';
+    }
+  } catch (error) {
+    dbTest = `failed: ${error.message}`;
+  }
+  
   res.json({
     status: 'ok',
-    timestamp: new Date().toISOString(),
+    server: 'running',
     mongodb: {
       connected: isMongoDBConnected(),
-      status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      status: dbStatus,
+      state: dbState,
+      test: dbTest,
       database: mongoose.connection.db ? mongoose.connection.db.databaseName : null
     },
     server: {
       uptime: process.uptime(),
       memory: process.memoryUsage(),
       version: process.version
+    },
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Detailed database status endpoint for debugging
+app.get('/api/debug/db-status', async (req, res) => {
+  const connectionStates = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  };
+  
+  const dbState = mongoose.connection.readyState;
+  
+  let collections = [];
+  let userCount = 0;
+  let dbTest = null;
+  
+  try {
+    if (dbState === 1) {
+      // Get collections
+      const db = mongoose.connection.db;
+      const collectionList = await db.listCollections().toArray();
+      collections = collectionList.map(col => col.name);
+      
+      // Test user model
+      const User = require('./models/User');
+      userCount = await User.countDocuments();
+      
+      dbTest = 'all-operations-successful';
     }
+  } catch (error) {
+    dbTest = `error: ${error.message}`;
+  }
+  
+  res.json({
+    mongodb: {
+      connectionState: dbState,
+      connectionStatus: connectionStates[dbState] || 'unknown',
+      databaseName: mongoose.connection.db?.databaseName || 'not-connected',
+      uri: process.env.MONGODB_URI?.replace(/:([^:@]{8})[^:@]*@/, ':****@') || 'not-set',
+      collections,
+      userCount,
+      test: dbTest
+    },
+    server: {
+      nodeVersion: process.version,
+      uptime: process.uptime(),
+      memory: process.memoryUsage()
+    },
+    timestamp: new Date().toISOString()
   });
 });
 

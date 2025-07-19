@@ -144,16 +144,56 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
+      
+      console.log('🚀 Frontend: Starting registration...', { name, email });
+      
       const response = await axios.post('/api/auth/register', {
-        name,
-        email,
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
         password,
       });
-      setUser(response.data.user);
-      localStorage.setItem('token', response.data.token);
-      return response.data;
+      
+      console.log('✅ Frontend: Registration successful', response.data);
+      
+      if (response.data.success && response.data.user) {
+        setUser(response.data.user);
+        localStorage.setItem('token', response.data.token);
+        console.log('✅ Frontend: User data saved to state and localStorage');
+        return response.data;
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred');
+      console.error('❌ Frontend: Registration failed', err);
+      
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (err.response?.data) {
+        const { message, error, connectionState } = err.response.data;
+        
+        // Handle specific error types
+        if (err.response.status === 503) {
+          errorMessage = 'Database connection failed. Please try again later.';
+        } else if (err.response.status === 400) {
+          errorMessage = message || 'Please check your input and try again.';
+        } else {
+          errorMessage = message || errorMessage;
+        }
+        
+        // Log additional debug info
+        console.error('Error details:', { 
+          status: err.response.status, 
+          message, 
+          error, 
+          connectionState 
+        });
+      } else if (err.code === 'ERR_NETWORK') {
+        errorMessage = 'Network error. Please check your connection.';
+      } else if (err.code === 'ERR_CONNECTION_REFUSED') {
+        errorMessage = 'Server is not responding. Please try again later.';
+      }
+      
+      setError(errorMessage);
       throw err;
     } finally {
       setLoading(false);

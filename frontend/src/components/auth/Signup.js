@@ -8,15 +8,34 @@ function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [success, setSuccess] = useState('');
   const { register, error, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSuccess('');
+    
+    // Client-side validation
+    if (!name.trim() || !email.trim() || !password) {
+      return;
+    }
+    
+    if (password.length < 6) {
+      return;
+    }
+    
     try {
-      await register(name, email, password);
-      navigate('/');
+      console.log('🚀 Frontend: Submitting signup form...');
+      const result = await register(name, email, password);
+      
+      if (result && result.success) {
+        setSuccess('Account created successfully! Redirecting...');
+        console.log('✅ Frontend: Signup successful, redirecting...');
+        setTimeout(() => navigate('/'), 1500);
+      }
     } catch (err) {
+      console.error('❌ Frontend: Signup form error:', err);
       // Error is handled by the auth context
     }
   };
@@ -48,7 +67,8 @@ function Signup() {
         <h1 className="signup-heading">Keep your creative assets organized.</h1>
         <p className="signup-subheading">Sign up to start your 30 days free trial.</p>
         
-        {error && <div style={{ color: '#dc3545', marginBottom: '20px', fontSize: '14px' }}>{error}</div>}
+        {error && <div style={{ color: '#dc3545', marginBottom: '20px', fontSize: '14px', padding: '10px', background: '#f8d7da', border: '1px solid #f5c6cb', borderRadius: '4px' }}>{error}</div>}
+        {success && <div style={{ color: '#155724', marginBottom: '20px', fontSize: '14px', padding: '10px', background: '#d1eddf', border: '1px solid #c3e6cb', borderRadius: '4px' }}>{success}</div>}
         
         <button className="google-signin-btn" onClick={handleGoogleSignIn}>
           <div className="google-icon">G</div>
@@ -69,6 +89,8 @@ function Signup() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              minLength={2}
+              disabled={loading}
             />
           </div>
           
@@ -81,6 +103,7 @@ function Signup() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
           
@@ -89,10 +112,12 @@ function Signup() {
             <input
               type="password"
               className="form-input"
-              placeholder="Enter your password"
+              placeholder="Enter your password (min 6 characters)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
+              disabled={loading}
             />
           </div>
           
