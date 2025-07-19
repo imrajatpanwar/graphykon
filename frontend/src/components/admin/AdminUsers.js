@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import getApiConfig from '../../config/api';
 import useAdminRealTime from '../../hooks/useAdminRealTime';
 import VerificationTick from '../common/VerificationTick';
 
@@ -35,7 +36,8 @@ const AdminUsers = () => {
         status: filters.status
       });
 
-      const response = await axios.get(`/api/admin/users?${queryParams}`, {
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/admin/users?${queryParams}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -94,7 +96,8 @@ const AdminUsers = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(`/api/admin/users/${editingUser._id}`, editingUser, {
+      const apiConfig = getApiConfig();
+      const response = await axios.put(`${apiConfig.baseURL}/api/admin/users/${editingUser._id}`, editingUser, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSuccess('User updated successfully');
@@ -115,7 +118,8 @@ const AdminUsers = () => {
     if (window.confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`/api/admin/users/${userId}`, {
+        const apiConfig = getApiConfig();
+        await axios.delete(`${apiConfig.baseURL}/api/admin/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setSuccess('User deleted successfully');

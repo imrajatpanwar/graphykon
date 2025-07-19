@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import getApiConfig from '../../config/api';
 import useAdminRealTime from '../../hooks/useAdminRealTime';
 
 const AdminOverview = () => {
@@ -17,8 +18,9 @@ const AdminOverview = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
+      const apiConfig = getApiConfig();
       // Fetch regular stats
-      const statsResponse = await axios.get('/api/admin/stats', {
+      const statsResponse = await axios.get(`${apiConfig.baseURL}/api/admin/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStats(statsResponse.data.stats);
@@ -26,7 +28,7 @@ const AdminOverview = () => {
       
       // Fetch monetization stats
       try {
-        const monetizationResponse = await axios.get('/api/monetization/admin/overview', {
+        const monetizationResponse = await axios.get(`${apiConfig.baseURL}/api/monetization/admin/overview`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMonetizationStats(monetizationResponse.data);

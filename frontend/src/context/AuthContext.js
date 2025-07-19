@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const token = localStorage.getItem('token');
         if (token) {
-          const response = await axios.get('/api/auth/me', {
+          const response = await axios.get(`${apiConfig.baseURL}/api/auth/me`, {
             headers: {
               Authorization: `Bearer ${token}`
             }
@@ -151,7 +151,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.post('/api/auth/login', {
+      const response = await axios.post(`${apiConfig.baseURL}/api/auth/login`, {
         email,
         password,
       });
@@ -173,7 +173,7 @@ export const AuthProvider = ({ children }) => {
       
       console.log('🚀 Frontend: Starting registration...', { name, email });
       
-      const response = await axios.post('/api/auth/register', {
+      const response = await axios.post(`${apiConfig.baseURL}/api/auth/register`, {
         name: name.trim(),
         email: email.toLowerCase().trim(),
         password,
@@ -228,7 +228,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post('/api/auth/logout');
+      await axios.post(`${apiConfig.baseURL}/api/auth/logout`);
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

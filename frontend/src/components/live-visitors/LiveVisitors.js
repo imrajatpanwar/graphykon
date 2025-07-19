@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import getApiConfig from '../../config/api';
 import './LiveVisitors.css';
 
 const LiveVisitors = () => {
@@ -48,8 +49,9 @@ const LiveVisitors = () => {
 
   const fetchVisitorStats = async () => {
     try {
+      const apiConfig = getApiConfig();
       const token = localStorage.getItem('token');
-      const response = await axios.get('/api/admin/visitors', {
+      const response = await axios.get(`${apiConfig.baseURL}/api/admin/visitors`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setVisitorStats(response.data);
@@ -62,8 +64,9 @@ const LiveVisitors = () => {
 
   const fetchAdvancedStats = async () => {
     try {
+      const apiConfig = getApiConfig();
       const token = localStorage.getItem('token');
-      const response = await axios.get('/api/admin/visitors/summary-advanced', {
+      const response = await axios.get(`${apiConfig.baseURL}/api/admin/visitors/summary-advanced`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAdvancedStats(response.data);
@@ -74,8 +77,9 @@ const LiveVisitors = () => {
 
   const testBroadcast = async () => {
     try {
+      const apiConfig = getApiConfig();
       const token = localStorage.getItem('token');
-      await axios.post('/api/admin/visitors/test-broadcast', {}, {
+      await axios.post(`${apiConfig.baseURL}/api/admin/visitors/test-broadcast`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log('Test broadcast triggered');

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import getApiConfig from '../../config/api';
 
 const LiveVisitorsSidebar = () => {
   const { socket, isAdmin } = useAuth();
@@ -19,8 +20,9 @@ const LiveVisitorsSidebar = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
 
+      const apiConfig = getApiConfig();
       // Fetch current visitor stats
-      const response = await axios.get('/api/admin/visitors', { headers });
+      const response = await axios.get(`${apiConfig.baseURL}/api/admin/visitors`, { headers });
       setVisitorStats(response.data);
     } catch (error) {
       console.error('Error fetching visitor data:', error);

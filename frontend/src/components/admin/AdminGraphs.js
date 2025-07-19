@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import getApiConfig from '../../config/api';
 
 const AdminGraphs = () => {
   const [graphs, setGraphs] = useState([]);
@@ -23,7 +24,8 @@ const AdminGraphs = () => {
         search: filters.search
       });
 
-      const response = await axios.get(`/api/admin/graphs?${queryParams}`, {
+      const apiConfig = getApiConfig();
+      const response = await axios.get(`${apiConfig.baseURL}/api/admin/graphs?${queryParams}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -51,7 +53,8 @@ const AdminGraphs = () => {
     if (window.confirm(`Are you sure you want to delete graph "${graphTitle}"? This action cannot be undone.`)) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`/api/admin/graphs/${graphId}`, {
+        const apiConfig = getApiConfig();
+        await axios.delete(`${apiConfig.baseURL}/api/admin/graphs/${graphId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setSuccess('Graph deleted successfully');
