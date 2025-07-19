@@ -84,7 +84,8 @@ mongoose.connect(MONGODB_URI, mongoOptions)
     console.log('3. For MongoDB Atlas: Check your connection string, username, password, and IP whitelist');
     console.log('4. Verify network connectivity to your MongoDB server');
     console.log('\nCurrent MONGODB_URI:', MONGODB_URI.replace(/:([^:@]{8})[^:@]*@/, ':****@')); // Hide password
-    process.exit(1);
+    console.log('\n⚠️  Server will continue running without database connection');
+    console.log('   Some features may not work properly until MongoDB is available');
   });
 
 // Handle connection events
@@ -99,6 +100,28 @@ mongoose.connection.on('error', (err) => {
 mongoose.connection.on('disconnected', () => {
   console.log('Mongoose disconnected from MongoDB');
 });
+
+// MongoDB connection status check function
+function isMongoDBConnected() {
+  return mongoose.connection.readyState === 1;
+}
+
+// Function to attempt MongoDB reconnection
+async function attemptMongoDBReconnection() {
+  if (isMongoDBConnected()) {
+    return true;
+  }
+  
+  try {
+    console.log('🔄 Attempting to reconnect to MongoDB...');
+    await mongoose.connect(MONGODB_URI, mongoOptions);
+    console.log('✅ MongoDB reconnection successful');
+    return true;
+  } catch (error) {
+    console.error('❌ MongoDB reconnection failed:', error.message);
+    return false;
+  }
+}
 
 // Graceful exit
 process.on('SIGINT', async () => {
@@ -594,11 +617,21 @@ setInterval(() => {
   broadcastDashboardStats();
 }, 30000);
 
+// Periodic MongoDB connection check and reconnection attempt (every 60 seconds)
+setInterval(async () => {
+  if (!isMongoDBConnected()) {
+    console.log('🔍 MongoDB connection check: Not connected, attempting reconnection...');
+    await attemptMongoDBReconnection();
+  }
+}, 60000);
+
 // Make io available for routes
 app.set('io', io);
 app.set('liveVisitors', liveVisitors);
 app.set('broadcastVisitorStats', broadcastVisitorStats);
 app.set('broadcastDashboardStats', broadcastDashboardStats);
+app.set('isMongoDBConnected', isMongoDBConnected);
+app.set('attemptMongoDBReconnection', attemptMongoDBReconnection);
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -618,7 +651,32 @@ app.get('/', (req, res) => {
 
 // API base route
 app.get('/api', (req, res) => {
-  res.json({ message: 'Graphykon API is working', version: '1.0.0' });
+  res.json({ 
+    message: 'Graphykon API is working', 
+    version: '1.0.0',
+    mongodb: {
+      connected: isMongoDBConnected(),
+      status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    }
+  });
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    mongodb: {
+      connected: isMongoDBConnected(),
+      status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      database: mongoose.connection.db ? mongoose.connection.db.databaseName : null
+    },
+    server: {
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      version: process.version
+    }
+  });
 });
 
 // Error handling middleware
@@ -629,5 +687,13 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔗 API endpoint: http://localhost:${PORT}/api`);
+  console.log(`🗄️  MongoDB status: ${isMongoDBConnected() ? 'Connected' : 'Disconnected'}`);
+  
+  if (!isMongoDBConnected()) {
+    console.log('⚠️  Note: Server is running without MongoDB connection');
+    console.log('   Some features may not work until MongoDB is available');
+  }
 }); 
