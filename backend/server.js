@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -30,18 +31,20 @@ const io = socketIo(server, {
 const liveVisitors = new Map();
 // Session tracking store (for database persistence)
 const activeSessions = new Map();
+// Peak online visitors tracking
+let peakOnlineVisitors = 0;
 
 // Check for required environment variables
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/graphykon';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-for-development';
 
-console.log('Using MongoDB URI:', MONGODB_URI);
+console.log('Using MongoDB URI:', MONGODB_URI.replace(/:([^:@]{8})[^:@]*@/, ':****@'));
 console.log('Using JWT Secret:', JWT_SECRET ? 'Set' : 'Not set');
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads', 'profile-images');
-if (!require('fs').existsSync(uploadsDir)) {
-  require('fs').mkdirSync(uploadsDir, { recursive: true });
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 // Middleware
@@ -163,8 +166,10 @@ io.on('connection', (socket) => {
       // Store in real-time tracking
       liveVisitors.set(socket.id, visitor);
       
-      console.log('Visitor joined:', visitor);
-      console.log('Total live visitors now:', liveVisitors.size);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Visitor joined:', visitor);
+        console.log('Total live visitors now:', liveVisitors.size);
+      }
       
       // Create database session
       const session = new VisitorSession({
@@ -375,8 +380,11 @@ function broadcastVisitorStats() {
     }))
   };
 
-  console.log('Broadcasting visitor stats:', visitorStats);
-  console.log('Admin room members:', io.sockets.adapter.rooms.get('admin-room')?.size || 0);
+  // Only log visitor stats in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Broadcasting visitor stats:', visitorStats);
+    console.log('Admin room members:', io.sockets.adapter.rooms.get('admin-room')?.size || 0);
+  }
 
   // Emit to admin room (we'll join admins to this room)
   io.to('admin-room').emit('visitor-update', visitorStats);
@@ -393,8 +401,6 @@ async function broadcastAdvancedStats() {
       console.log('MongoDB not connected, skipping advanced stats broadcast');
       return;
     }
-    
-    const VisitorSession = require('./models/VisitorSession');
     
     // --- All-time unique visitors ---
     const allTime = await VisitorSession.aggregate([
@@ -443,11 +449,9 @@ async function broadcastAdvancedStats() {
     const totalMonth = month[0]?.uniqueVisitors || 0;
 
     // --- Peak online (in-memory) ---
-    let peakOnline = global.peakOnline || 0;
     const currentOnline = liveVisitors.size;
-    if (currentOnline > peakOnline) {
-      peakOnline = currentOnline;
-      global.peakOnline = peakOnline;
+    if (currentOnline > peakOnlineVisitors) {
+      peakOnlineVisitors = currentOnline;
     }
 
     // --- Current page popularity ---
@@ -484,14 +488,16 @@ async function broadcastAdvancedStats() {
       totalToday,
       totalWeek,
       totalMonth,
-      peakOnline,
+      peakOnline: peakOnlineVisitors,
       currentOnline,
       currentPages,
       deviceCounts,
       browserCounts
     };
 
-    console.log('Broadcasting advanced stats:', advancedStats);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Broadcasting advanced stats:', advancedStats);
+    }
     io.to('admin-room').emit('advanced-stats-update', advancedStats);
   } catch (error) {
     console.error('Error broadcasting advanced stats:', error);
