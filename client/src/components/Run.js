@@ -9,6 +9,11 @@ const Run = () => {
       description: "Complete automated deployment - pulls code, installs dependencies, restarts servers, builds frontend"
     },
     {
+      title: "📤 Push to GitHub",
+      command: "git add . && git commit -m \"Update changes\" && git push",
+      description: "Stage, commit, and push all changes to GitHub repository"
+    },
+    {
       title: "📥 Pull Latest Code",
       command: "ssh root@89.117.58.204 \"cd /var/www/graphykon && git pull\"",
       description: "Pull latest changes from GitHub to server"
@@ -96,9 +101,9 @@ const Run = () => {
           </button>
           <button 
             className="action-btn secondary"
-            onClick={() => copyToClipboard("ssh root@89.117.58.204 \"cd /var/www/graphykon && git pull\"")}
+            onClick={() => copyToClipboard("git add . && git commit -m \"Update changes\" && git push")}
           >
-            📥 Pull Code
+            📤 Push to GitHub
           </button>
           <button 
             className="action-btn warning"

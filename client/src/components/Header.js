@@ -31,15 +31,6 @@ const Header = () => {
         gap: '1rem',
         alignItems: 'center'
       }}>
-        <Link to="/run" style={{
-          textDecoration: 'none',
-          padding: '0.5rem 1rem',
-          backgroundColor: '#28a745',
-          color: 'white',
-          borderRadius: '4px',
-          fontWeight: '500',
-          transition: 'background-color 0.2s'
-        }}>🚀 Run</Link>
         <Link to="/login" style={{
           textDecoration: 'none',
           padding: '0.5rem 1rem',
