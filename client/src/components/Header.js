@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import '../index.css';
 import './Header.css';
 
@@ -12,6 +13,7 @@ const Header = () => {
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'space-between',
       borderBottom: '2px solid #007bff',
       position: 'sticky',
       top: 0,
@@ -23,6 +25,32 @@ const Header = () => {
         textAlign: 'left',
         color: '#007bff'
       }}>Logo</div>
+      
+      <div className="header-buttons" style={{
+        display: 'flex',
+        gap: '1rem',
+        alignItems: 'center'
+      }}>
+        <Link to="/login" style={{
+          textDecoration: 'none',
+          padding: '0.5rem 1rem',
+          backgroundColor: '#007bff',
+          color: 'white',
+          borderRadius: '4px',
+          fontWeight: '500',
+          transition: 'background-color 0.2s'
+        }}>Login</Link>
+        <Link to="/signup" style={{
+          textDecoration: 'none',
+          padding: '0.5rem 1rem',
+          backgroundColor: 'transparent',
+          color: '#007bff',
+          border: '2px solid #007bff',
+          borderRadius: '4px',
+          fontWeight: '500',
+          transition: 'all 0.2s'
+        }}>Sign Up</Link>
+      </div>
     </header>
   );
 };
