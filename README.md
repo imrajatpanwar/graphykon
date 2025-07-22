@@ -161,4 +161,4 @@ curl -X POST https://graphykon.com/api/auth/signup \
 
 ## License
 
-MIT License - see LICENSE file for details 
+MIT License - see LICENSE file for details
