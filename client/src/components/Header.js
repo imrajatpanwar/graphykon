@@ -36,7 +36,17 @@ const Header = () => {
       }}>
         {user ? (
           <>
-            {!user.creator && (
+            {user.creator ? (
+              <Link to="/creator-dashboard" style={{
+                textDecoration: 'none',
+                padding: '0.5rem 1rem',
+                backgroundColor: '#17a2b8',
+                color: 'white',
+                borderRadius: '4px',
+                fontWeight: '500',
+                transition: 'background-color 0.2s'
+              }}>Creator Dashboard</Link>
+            ) : (
               <Link to="/be-a-creator" style={{
                 textDecoration: 'none',
                 padding: '0.5rem 1rem',
