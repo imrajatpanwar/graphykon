@@ -25,7 +25,7 @@ function App() {
                 <BeACreator />
               </PrivateRoute>
             } />
-            <Route path="/creator-dashboard" element={
+            <Route path="/studio" element={
               <PrivateRoute>
                 <CreatorDashboard />
               </PrivateRoute>

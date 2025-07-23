@@ -21,7 +21,7 @@ const CreatorDashboard = () => {
   return (
     <div className="creator-dashboard">
       <div className="dashboard-header">
-        <h1>Welcome to Your Creator Dashboard</h1>
+        <h1>Welcome to Your Studio</h1>
         <p>You're now a creator! Start building your content and growing your audience.</p>
       </div>
       

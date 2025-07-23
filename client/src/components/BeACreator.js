@@ -149,8 +149,8 @@ const BeACreator = () => {
       // Update user data in context
       updateUser(response.data.user);
       
-      // Redirect to creator dashboard
-      navigate('/creator-dashboard');
+      // Redirect to studio
+      navigate('/studio');
       
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to register as creator';

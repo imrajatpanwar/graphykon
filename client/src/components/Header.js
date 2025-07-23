@@ -27,14 +27,16 @@ const Header = () => {
         display: 'flex',
         alignItems: 'center'
       }}>
-        <img 
-          src={GraphykonLogo} 
-          alt="Graphykon" 
-          style={{
-            height: '30px',
-            width: 'auto'
-          }}
-        />
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <img 
+            src={GraphykonLogo} 
+            alt="Graphykon" 
+            style={{
+              height: '18px',
+              width: 'auto'
+            }}
+          />
+        </Link>
       </div>
       
       <div className="header-buttons" style={{
@@ -45,7 +47,7 @@ const Header = () => {
         {user ? (
           <>
             {user.creator ? (
-              <Link to="/creator-dashboard" style={{
+              <Link to="/studio" style={{
                 textDecoration: 'none',
                 padding: '0.5rem 1rem',
                 backgroundColor: '#17a2b8',
@@ -53,7 +55,7 @@ const Header = () => {
                 borderRadius: '4px',
                 fontWeight: '500',
                 transition: 'background-color 0.2s'
-              }}>Creator Dashboard</Link>
+              }}>Studio</Link>
             ) : (
               <Link to="/be-a-creator" style={{
                 textDecoration: 'none',
