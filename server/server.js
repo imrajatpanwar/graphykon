@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
+const creatorRoutes = require('./routes/creator');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/creator', creatorRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

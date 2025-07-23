@@ -134,4 +134,28 @@ router.get('/me', protect, async (req, res) => {
   }
 });
 
+// @route   GET /api/auth/check-username
+// @desc    Check if username is available
+// @access  Public
+router.get('/check-username', async (req, res) => {
+  try {
+    const { username } = req.query;
+    
+    if (!username) {
+      return res.status(400).json({ message: 'Username parameter is required' });
+    }
+
+    // Check if username exists
+    const existingUser = await User.findOne({ username });
+    
+    res.json({
+      available: !existingUser
+    });
+
+  } catch (error) {
+    console.error('Check username error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router; 

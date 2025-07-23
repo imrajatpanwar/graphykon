@@ -24,6 +24,36 @@ const userSchema = new mongoose.Schema({
     minlength: [6, 'Password must be at least 6 characters'],
     select: false // Don't include password in queries by default
   },
+  // Creator-specific fields
+  username: {
+    type: String,
+    unique: true,
+    sparse: true, // Allow null/undefined values but ensure uniqueness when present
+    trim: true,
+    minlength: [3, 'Username must be at least 3 characters'],
+    maxlength: [30, 'Username cannot be more than 30 characters'],
+    match: [/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores']
+  },
+  phone: {
+    type: String,
+    trim: true
+  },
+  location: {
+    type: String,
+    trim: true
+  },
+  profileImage: {
+    type: String
+  },
+  bio: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Bio cannot be more than 500 characters']
+  },
+  creator: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -62,6 +92,12 @@ userSchema.methods.getUserInfo = function() {
     id: this._id,
     name: this.name,
     email: this.email,
+    username: this.username,
+    phone: this.phone,
+    location: this.location,
+    profileImage: this.profileImage,
+    bio: this.bio,
+    creator: this.creator,
     createdAt: this.createdAt,
     lastLogin: this.lastLogin
   };

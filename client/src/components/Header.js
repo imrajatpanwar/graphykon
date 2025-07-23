@@ -1,9 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import '../index.css';
 import './Header.css';
 
 const Header = () => {
+  const { user, logout } = useAuth();
+
   return (
     <header className="header" style={{
       background: '#fff',
@@ -31,25 +34,54 @@ const Header = () => {
         gap: '1rem',
         alignItems: 'center'
       }}>
-        <Link to="/login" style={{
-          textDecoration: 'none',
-          padding: '0.5rem 1rem',
-          backgroundColor: '#007bff',
-          color: 'white',
-          borderRadius: '4px',
-          fontWeight: '500',
-          transition: 'background-color 0.2s'
-        }}>Login</Link>
-        <Link to="/signup" style={{
-          textDecoration: 'none',
-          padding: '0.5rem 1rem',
-          backgroundColor: 'transparent',
-          color: '#007bff',
-          border: '2px solid #007bff',
-          borderRadius: '4px',
-          fontWeight: '500',
-          transition: 'all 0.2s'
-        }}>Sign Up</Link>
+        {user ? (
+          <>
+            {!user.creator && (
+              <Link to="/be-a-creator" style={{
+                textDecoration: 'none',
+                padding: '0.5rem 1rem',
+                backgroundColor: '#28a745',
+                color: 'white',
+                borderRadius: '4px',
+                fontWeight: '500',
+                transition: 'background-color 0.2s'
+              }}>Be a Creator</Link>
+            )}
+            <button onClick={logout} style={{
+              textDecoration: 'none',
+              padding: '0.5rem 1rem',
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}>Logout</button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" style={{
+              textDecoration: 'none',
+              padding: '0.5rem 1rem',
+              backgroundColor: '#007bff',
+              color: 'white',
+              borderRadius: '4px',
+              fontWeight: '500',
+              transition: 'background-color 0.2s'
+            }}>Login</Link>
+            <Link to="/signup" style={{
+              textDecoration: 'none',
+              padding: '0.5rem 1rem',
+              backgroundColor: 'transparent',
+              color: '#007bff',
+              border: '2px solid #007bff',
+              borderRadius: '4px',
+              fontWeight: '500',
+              transition: 'all 0.2s'
+            }}>Sign Up</Link>
+          </>
+        )}
       </div>
     </header>
   );

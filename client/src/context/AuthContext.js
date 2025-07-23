@@ -19,14 +19,17 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Check if user is logged in on app start
     const token = localStorage.getItem('token');
-    if (token) {
+    const storedUser = localStorage.getItem('user');
+    
+    if (token && storedUser) {
       try {
         const decoded = jwtDecode(token);
         const currentTime = Date.now() / 1000;
         
         if (decoded.exp > currentTime) {
-          // Token is valid
-          setUser(decoded);
+          // Token is valid, merge stored user data with decoded token
+          const userData = JSON.parse(storedUser);
+          setUser({ ...decoded, ...userData });
         } else {
           // Token expired
           localStorage.removeItem('token');
@@ -50,7 +53,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userData));
       
       const decoded = jwtDecode(token);
-      setUser(decoded);
+      setUser({ ...decoded, ...userData });
       
       return { success: true };
     } catch (error) {
@@ -70,7 +73,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userData));
       
       const decoded = jwtDecode(token);
-      setUser(decoded);
+      setUser({ ...decoded, ...userData });
       
       return { success: true };
     } catch (error) {
@@ -79,6 +82,12 @@ export const AuthProvider = ({ children }) => {
         error: error.response?.data?.message || 'Signup failed' 
       };
     }
+  };
+
+  const updateUser = (userData) => {
+    const updatedUser = { ...user, ...userData };
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const logout = () => {
@@ -92,6 +101,7 @@ export const AuthProvider = ({ children }) => {
     login,
     signup,
     logout,
+    updateUser,
     loading
   };
 
