@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../index.css';
 import './Header.css';
+import GraphykonLogo from './image/Graphykon_logo.svg';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -23,11 +24,18 @@ const Header = () => {
       zIndex: 1000
     }}>
       <div className="logo" style={{
-        fontSize: '2rem',
-        fontWeight: '700',
-        textAlign: 'left',
-        color: '#007bff'
-      }}>Logo</div>
+        display: 'flex',
+        alignItems: 'center'
+      }}>
+        <img 
+          src={GraphykonLogo} 
+          alt="Graphykon" 
+          style={{
+            height: '30px',
+            width: 'auto'
+          }}
+        />
+      </div>
       
       <div className="header-buttons" style={{
         display: 'flex',
