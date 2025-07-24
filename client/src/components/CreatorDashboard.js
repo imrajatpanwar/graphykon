@@ -30,7 +30,7 @@ const CreatorDashboard = () => {
       case 'earn':
         return <div className="tab-content"><h2>Earn</h2><p>Earnings content coming soon...</p></div>;
       case 'setting':
-        return <div className="tab-content"><h2>Settings</h2><p>Settings content coming soon...</p></div>;
+        return <UserSettings />;
       default:
         return (
           <div className="main-content">
@@ -233,9 +233,8 @@ const CreatorDashboard = () => {
   );
 };
 
-// Import Assets component
+// Assets component
 const Assets = () => {
-  const { user } = useAuth();
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [uploadedAssets, setUploadedAssets] = useState([]);
   const [formData, setFormData] = useState({
@@ -243,6 +242,8 @@ const Assets = () => {
     description: '',
     tags: '',
     category: '',
+    dimension: '',
+    credit: false,
     formats: {
       jpg: false,
       png: false,
@@ -250,8 +251,8 @@ const Assets = () => {
       pdf: false
     }
   });
-  const [coverImage, setCoverImage] = useState(null);
-  const [showcaseImages, setShowcaseImages] = useState([]);
+  const [coverImages, setCoverImages] = useState([]);
+  const [mainFile, setMainFile] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -271,19 +272,32 @@ const Assets = () => {
     }));
   };
 
-  const handleCoverImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setCoverImage(file);
+  const handleCreditChange = () => {
+    setFormData(prev => ({
+      ...prev,
+      credit: !prev.credit
+    }));
+  };
+
+  const handleCoverImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length <= 4) {
+      setCoverImages(files);
+    } else {
+      alert('Maximum 4 cover images allowed');
     }
   };
 
-  const handleShowcaseImagesChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length <= 4) {
-      setShowcaseImages(files);
-    } else {
-      alert('Maximum 4 showcase images allowed');
+  const handleMainFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const maxSize = 500 * 1024 * 1024; // 500MB in bytes
+      if (file.size > maxSize) {
+        alert('File size must be less than 500MB');
+        e.target.value = '';
+        return;
+      }
+      setMainFile(file);
     }
   };
 
@@ -294,8 +308,8 @@ const Assets = () => {
     const newAsset = {
       id: Date.now(),
       ...formData,
-      coverImage: coverImage ? URL.createObjectURL(coverImage) : null,
-      showcaseImages: showcaseImages.map(file => URL.createObjectURL(file)),
+      coverImages: coverImages.map(file => URL.createObjectURL(file)),
+      mainFile: mainFile ? URL.createObjectURL(mainFile) : null,
       uploadDate: new Date().toISOString(),
       status: 'published'
     };
@@ -309,6 +323,8 @@ const Assets = () => {
       description: '',
       tags: '',
       category: '',
+      dimension: '',
+      credit: false,
       formats: {
         jpg: false,
         png: false,
@@ -316,8 +332,8 @@ const Assets = () => {
         pdf: false
       }
     });
-    setCoverImage(null);
-    setShowcaseImages([]);
+    setCoverImages([]);
+    setMainFile(null);
     setShowUploadForm(false);
   };
 
@@ -327,37 +343,41 @@ const Assets = () => {
       formData.description.trim() &&
       formData.tags.trim() &&
       formData.category.trim() &&
-      coverImage &&
+      formData.dimension.trim() &&
+      coverImages.length > 0 &&
+      mainFile &&
       Object.values(formData.formats).some(format => format)
     );
   };
 
   return (
     <div className="assets-page">
-      <div className="assets-header">
-        <h1>Assets</h1>
-        <button 
-          className="upload-asset-btn"
-          onClick={() => setShowUploadForm(true)}
-        >
-          Upload Asset
-        </button>
-      </div>
+      {!showUploadForm && (
+        <div className="assets-header">
+          <h1>Assets</h1>
+          <button 
+            className="upload-asset-btn"
+            onClick={() => setShowUploadForm(true)}
+          >
+            Upload Asset
+          </button>
+        </div>
+      )}
 
-      {/* Upload Form Modal */}
+      {/* Upload Form Inline */}
       {showUploadForm && (
-        <div className="modal-overlay">
-          <div className="upload-modal">
-            <div className="modal-header">
-              <h2>Upload New Asset</h2>
-              <button 
-                className="close-btn"
-                onClick={() => setShowUploadForm(false)}
-              >
-                ×
-              </button>
-            </div>
+        <div className="upload-form-container">
+          <div className="form-header">
+            <h2>Upload New Asset</h2>
+            <button 
+              className="cancel-btn"
+              onClick={() => setShowUploadForm(false)}
+            >
+              Cancel
+            </button>
+          </div>
 
+          <div className="upload-form-layout">
             <form onSubmit={handleSubmit} className="upload-form">
               <div className="form-group">
                 <label htmlFor="title">Title *</label>
@@ -371,6 +391,31 @@ const Assets = () => {
                   required
                 />
                 <small>Used as the page title for SEO</small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="mainFile">Main File * (Max 500MB)</label>
+                <input
+                  type="file"
+                  id="mainFile"
+                  accept=".jpg,.jpeg,.png,.psd,.pdf,.ai,.eps,.svg,.zip,.rar"
+                  onChange={handleMainFileChange}
+                  required
+                />
+                <small>Main asset file (JPG, PNG, PSD, PDF, AI, EPS, SVG, ZIP, RAR)</small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="coverImages">Cover Images * (Max 4)</label>
+                <input
+                  type="file"
+                  id="coverImages"
+                  accept="image/*"
+                  multiple
+                  onChange={handleCoverImagesChange}
+                  required
+                />
+                <small>Main images of the asset (select multiple images)</small>
               </div>
 
               <div className="form-group">
@@ -422,44 +467,20 @@ const Assets = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="coverImage">Cover Image *</label>
+                <label htmlFor="dimension">Dimension *</label>
                 <input
-                  type="file"
-                  id="coverImage"
-                  accept="image/*"
-                  onChange={handleCoverImageChange}
+                  type="text"
+                  id="dimension"
+                  name="dimension"
+                  value={formData.dimension}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 4000px x 4000px"
                   required
                 />
-                <small>Main thumbnail of the asset</small>
-                {coverImage && (
-                  <div className="image-preview">
-                    <img src={URL.createObjectURL(coverImage)} alt="Cover preview" />
-                  </div>
-                )}
+                <small>Enter the dimensions of your asset (width x height)</small>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="showcaseImages">Showcase Images (Max 4)</label>
-                <input
-                  type="file"
-                  id="showcaseImages"
-                  accept="image/*"
-                  multiple
-                  onChange={handleShowcaseImagesChange}
-                />
-                <small>Additional preview images</small>
-                {showcaseImages.length > 0 && (
-                  <div className="showcase-preview">
-                    {showcaseImages.map((file, index) => (
-                      <img 
-                        key={index} 
-                        src={URL.createObjectURL(file)} 
-                        alt={`Showcase ${index + 1}`} 
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+
 
               <div className="form-group">
                 <label>Available Formats *</label>
@@ -478,14 +499,22 @@ const Assets = () => {
                 <small>Select at least one format</small>
               </div>
 
+              <div className="form-group">
+                <label>Credit Requirement</label>
+                <div className="credit-option">
+                  <label className="credit-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={formData.credit}
+                      onChange={handleCreditChange}
+                    />
+                    <span>Credit Required</span>
+                  </label>
+                </div>
+                <small>Check if attribution is required when using this asset</small>
+              </div>
+
               <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="cancel-btn"
-                  onClick={() => setShowUploadForm(false)}
-                >
-                  Cancel
-                </button>
                 <button 
                   type="submit" 
                   className="submit-btn"
@@ -495,60 +524,359 @@ const Assets = () => {
                 </button>
               </div>
             </form>
+
+            {/* Preview Section */}
+            <div className="upload-preview">
+              <h3>Preview</h3>
+              <div className="preview-content">
+
+
+                {/* Cover Images Preview */}
+                {coverImages.length > 0 && (
+                  <div className="preview-cover-images">
+                    {coverImages.map((file, index) => (
+                      <div key={index} className="preview-cover-image">
+                        <img src={URL.createObjectURL(file)} alt={`Cover ${index + 1}`} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Title */}
+                {formData.title && (
+                  <h2 className="preview-title">{formData.title}</h2>
+                )}
+                
+                {/* Description */}
+                {formData.description && (
+                  <p className="preview-description">{formData.description}</p>
+                )}
+                
+                {/* Tags */}
+                {formData.tags && (
+                  <div className="preview-tags">
+                    {formData.tags.split(',').map((tag, index) => (
+                      <span key={index} className="preview-tag">{tag.trim()}</span>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Technical Details */}
+                <div className="preview-details">
+                  <div className="preview-details-left">
+                    <div className="preview-detail-item">
+                      <span className="detail-label">Format:</span>
+                      <span className="detail-value">
+                        {Object.entries(formData.formats)
+                          .filter(([_, available]) => available)
+                          .map(([format, _]) => format.toUpperCase())
+                          .join(', ')}
+                      </span>
+                    </div>
+                    <div className="preview-detail-item">
+                      <span className="detail-label">Dimension:</span>
+                      <span className="detail-value">{formData.dimension || 'Not specified'}</span>
+                    </div>
+                    <div className="preview-detail-item">
+                      <span className="detail-label">File Size:</span>
+                      <span className="detail-value">
+                        {mainFile ? `${(mainFile.size / (1024 * 1024)).toFixed(2)} MB` : '0 MB'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="preview-details-right">
+                    <div className="preview-detail-item">
+                      <span className="detail-label">Category:</span>
+                      <span className="detail-value">{formData.category}</span>
+                    </div>
+                    <div className="preview-detail-item">
+                      <span className="detail-label">Created:</span>
+                      <span className="detail-value">{new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</span>
+                    </div>
+                    <div className="preview-detail-item">
+                      <span className="detail-label">Credit:</span>
+                      <span className="detail-value">{formData.credit ? 'Required' : 'Not-Required'}</span>
+                    </div>
+                  </div>
+                </div>
+                
+
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* Uploaded Assets Display */}
-      <div className="assets-grid">
-        {uploadedAssets.length === 0 ? (
-          <div className="empty-state">
-            <h3>No Assets Uploaded Yet</h3>
-            <p>Start by uploading your first asset to showcase your work.</p>
-            <button 
-              className="upload-first-btn"
-              onClick={() => setShowUploadForm(true)}
-            >
-              Upload Your First Asset
-            </button>
-          </div>
-        ) : (
-          uploadedAssets.map(asset => (
-            <div key={asset.id} className="asset-card">
-              <div className="asset-image">
-                {asset.coverImage ? (
-                  <img src={asset.coverImage} alt={asset.title} />
+      {!showUploadForm && (
+        <div className="assets-grid">
+          {uploadedAssets.length === 0 ? (
+            <div className="empty-state">
+              <h3>No Assets Uploaded Yet</h3>
+              <p>Start by uploading your first asset to showcase your work.</p>
+            </div>
+          ) : (
+            uploadedAssets.map(asset => (
+              <div key={asset.id} className="asset-card">
+                              <div className="asset-image">
+                {asset.coverImages && asset.coverImages.length > 0 ? (
+                  <img src={asset.coverImages[0]} alt={asset.title} />
                 ) : (
                   <div className="asset-placeholder">No Image</div>
                 )}
-                <div className="asset-overlay">
-                  <button className="edit-btn">Edit</button>
-                  <button className="delete-btn">Delete</button>
+                  <div className="asset-overlay">
+                    <button className="edit-btn">Edit</button>
+                    <button className="delete-btn">Delete</button>
+                  </div>
+                </div>
+                <div className="asset-info">
+                  <h3>{asset.title}</h3>
+                  <p className="asset-category">{asset.category}</p>
+                  <p className="asset-description">{asset.description}</p>
+                  <div className="asset-tags">
+                    {asset.tags.split(',').map((tag, index) => (
+                      <span key={index} className="tag">{tag.trim()}</span>
+                    ))}
+                  </div>
+                  <div className="asset-formats">
+                    {Object.entries(asset.formats)
+                      .filter(([_, available]) => available)
+                      .map(([format, _]) => (
+                        <span key={format} className="format-badge">{format.toUpperCase()}</span>
+                      ))}
+                  </div>
+                  <p className="upload-date">
+                    Uploaded: {new Date(asset.uploadDate).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
-              <div className="asset-info">
-                <h3>{asset.title}</h3>
-                <p className="asset-category">{asset.category}</p>
-                <p className="asset-description">{asset.description}</p>
-                <div className="asset-tags">
-                  {asset.tags.split(',').map((tag, index) => (
-                    <span key={index} className="tag">{tag.trim()}</span>
-                  ))}
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// UserSettings component
+const UserSettings = () => {
+  const { user } = useAuth();
+  const [profileData, setProfileData] = useState({
+    name: user?.name || '',
+    username: user?.username || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    location: user?.location || '',
+    bio: user?.bio || ''
+  });
+  const [profileImage, setProfileImage] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleProfileImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImage(file);
+    }
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update local state
+      setProfileData(prev => ({
+        ...prev,
+        profileImage: profileImage ? URL.createObjectURL(profileImage) : user?.profileImage
+      }));
+      
+      setIsEditing(false);
+      // Here you would typically make an API call to update the user profile
+      console.log('Profile updated:', profileData);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setProfileData({
+      name: user?.name || '',
+      username: user?.username || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+      location: user?.location || '',
+      bio: user?.bio || ''
+    });
+    setProfileImage(null);
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="user-settings">
+      <div className="settings-header">
+        <h1>User Settings</h1>
+        <div className="settings-actions">
+          {!isEditing ? (
+            <button 
+              className="edit-btn"
+              onClick={() => setIsEditing(true)}
+            >
+              Edit Profile
+            </button>
+          ) : (
+            <div className="edit-actions">
+              <button 
+                className="cancel-btn"
+                onClick={handleCancel}
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+              <button 
+                className="save-btn"
+                onClick={handleSave}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="settings-content">
+        <div className="profile-section">
+          <div className="profile-image-section">
+            <div className="profile-image-container">
+              {(profileImage ? URL.createObjectURL(profileImage) : user?.profileImage) ? (
+                <img 
+                  src={profileImage ? URL.createObjectURL(profileImage) : user?.profileImage} 
+                  alt="Profile" 
+                  className="profile-image"
+                />
+              ) : (
+                <div className="profile-image-placeholder">
+                  <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  </svg>
                 </div>
-                <div className="asset-formats">
-                  {Object.entries(asset.formats)
-                    .filter(([_, available]) => available)
-                    .map(([format, _]) => (
-                      <span key={format} className="format-badge">{format.toUpperCase()}</span>
-                    ))}
+              )}
+              {isEditing && (
+                <div className="image-upload-overlay">
+                  <label htmlFor="profileImageUpload" className="upload-label">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 7v2.99s-1.99.01-2 0V7h-3s.01-1.99 0-2h3V2h2v3h3v2h-3zm-3 4V8h-3V5H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8h-3zM5 19l3-4 2 3 3-4 4 5H5z"/>
+                    </svg>
+                    Change Photo
+                  </label>
+                  <input
+                    type="file"
+                    id="profileImageUpload"
+                    accept="image/*"
+                    onChange={handleProfileImageChange}
+                    style={{ display: 'none' }}
+                  />
                 </div>
-                <p className="upload-date">
-                  Uploaded: {new Date(asset.uploadDate).toLocaleDateString()}
-                </p>
+              )}
+            </div>
+          </div>
+
+          <form onSubmit={handleSave} className="profile-form">
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="name">Full Name *</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={profileData.name}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="username">Username *</label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={profileData.username}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  required
+                />
               </div>
             </div>
-          ))
-        )}
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="email">Email *</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={profileData.email}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="phone">Phone Number</label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={profileData.phone}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="location">Location</label>
+              <input
+                type="text"
+                id="location"
+                name="location"
+                value={profileData.location}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                placeholder="City, Country"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="bio">Bio</label>
+              <textarea
+                id="bio"
+                name="bio"
+                value={profileData.bio}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                rows="4"
+                placeholder="Tell us about yourself..."
+              />
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
