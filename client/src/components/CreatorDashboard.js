@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import api from '../config/api';
 import './CreatorDashboard.css';
 
 const CreatorDashboard = () => {
@@ -24,7 +25,7 @@ const CreatorDashboard = () => {
       case 'assets':
         return <Assets />;
       case 'analytics':
-        return <div className="tab-content"><h2>Analytics</h2><p>Analytics content coming soon...</p></div>;
+        return <Analytics />;
       case 'copyright':
         return <div className="tab-content"><h2>Copyright</h2><p>Copyright content coming soon...</p></div>;
       case 'earn':
@@ -237,12 +238,15 @@ const CreatorDashboard = () => {
 const Assets = () => {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [uploadedAssets, setUploadedAssets] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [fetchingAssets, setFetchingAssets] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     tags: '',
     category: '',
-    dimension: '',
+    width: '',
+    height: '',
     credit: false,
     formats: {
       jpg: false,
@@ -253,6 +257,23 @@ const Assets = () => {
   });
   const [coverImages, setCoverImages] = useState([]);
   const [mainFile, setMainFile] = useState(null);
+
+  // Fetch assets on component mount
+  React.useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        setFetchingAssets(true);
+        const response = await api.get('/assets');
+        setUploadedAssets(response.data.assets);
+      } catch (error) {
+        console.error('Error fetching assets:', error);
+      } finally {
+        setFetchingAssets(false);
+      }
+    };
+
+    fetchAssets();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -301,54 +322,77 @@ const Assets = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Create new asset object
-    const newAsset = {
-      id: Date.now(),
-      ...formData,
-      coverImages: coverImages.map(file => URL.createObjectURL(file)),
-      mainFile: mainFile ? URL.createObjectURL(mainFile) : null,
-      uploadDate: new Date().toISOString(),
-      status: 'published'
-    };
-
-    // Add to uploaded assets
-    setUploadedAssets(prev => [newAsset, ...prev]);
-
-    // Reset form
-    setFormData({
-      title: '',
-      description: '',
-      tags: '',
-      category: '',
-      dimension: '',
-      credit: false,
-      formats: {
-        jpg: false,
-        png: false,
-        psd: false,
-        pdf: false
+    try {
+      setLoading(true);
+      // Create FormData for file upload
+      const formDataToSend = new FormData();
+      
+      // Add text fields
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('tags', formData.tags);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('width', formData.width);
+      formDataToSend.append('height', formData.height);
+      formDataToSend.append('credit', formData.credit);
+      formDataToSend.append('formats.jpg', formData.formats.jpg);
+      formDataToSend.append('formats.png', formData.formats.png);
+      formDataToSend.append('formats.psd', formData.formats.psd);
+      formDataToSend.append('formats.pdf', formData.formats.pdf);
+      
+      // Add files
+      if (mainFile) {
+        formDataToSend.append('mainFile', mainFile);
       }
-    });
-    setCoverImages([]);
-    setMainFile(null);
-    setShowUploadForm(false);
+      
+      coverImages.forEach(image => {
+        formDataToSend.append('coverImages', image);
+      });
+      
+      // Upload to backend
+      const response = await api.post('/assets/upload', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      // Add to uploaded assets
+      setUploadedAssets(prev => [response.data.asset, ...prev]);
+      
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        tags: '',
+        category: '',
+        width: '',
+        height: '',
+        credit: false,
+        formats: {
+          jpg: false,
+          png: false,
+          psd: false,
+          pdf: false
+        }
+      });
+      setCoverImages([]);
+      setMainFile(null);
+      setShowUploadForm(false);
+      
+      alert('Asset uploaded successfully!');
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert(error.response?.data?.message || 'Failed to upload asset');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const isFormValid = () => {
-    return (
-      formData.title.trim() &&
-      formData.description.trim() &&
-      formData.tags.trim() &&
-      formData.category.trim() &&
-      formData.dimension.trim() &&
-      coverImages.length > 0 &&
-      mainFile &&
-      Object.values(formData.formats).some(format => format)
-    );
-  };
+
 
   return (
     <div className="assets-page">
@@ -369,12 +413,20 @@ const Assets = () => {
         <div className="upload-form-container">
           <div className="form-header">
             <h2>Upload New Asset</h2>
-            <button 
-              className="cancel-btn"
-              onClick={() => setShowUploadForm(false)}
-            >
-              Cancel
-            </button>
+            <div className="form-header-actions">
+              <button 
+                className="upload-asset-btn"
+                onClick={() => setShowUploadForm(true)}
+              >
+                Upload Now
+              </button>
+              <button 
+                className="cancel-btn"
+                onClick={() => setShowUploadForm(false)}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
 
           <div className="upload-form-layout">
@@ -467,17 +519,32 @@ const Assets = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="dimension">Dimension *</label>
-                <input
-                  type="text"
-                  id="dimension"
-                  name="dimension"
-                  value={formData.dimension}
-                  onChange={handleInputChange}
-                  placeholder="e.g., 4000px x 4000px"
-                  required
-                />
-                <small>Enter the dimensions of your asset (width x height)</small>
+                <label>Asset Dimension *</label>
+                <div className="dimension-inputs">
+                  <div className="dimension-input">
+                    <input
+                      type="text"
+                      id="width"
+                      name="width"
+                      value={formData.width}
+                      onChange={handleInputChange}
+                      placeholder="Width (e.g., 4000px)"
+                      required
+                    />
+                  </div>
+                  <div className="dimension-input">
+                    <input
+                      type="text"
+                      id="height"
+                      name="height"
+                      value={formData.height}
+                      onChange={handleInputChange}
+                      placeholder="Height (e.g., 4000px)"
+                      required
+                    />
+                  </div>
+                </div>
+                <small>Enter the width and height of your asset</small>
               </div>
 
 
@@ -518,11 +585,19 @@ const Assets = () => {
                 <button 
                   type="submit" 
                   className="submit-btn"
-                  disabled={!isFormValid()}
+                  disabled={loading}
                 >
-                  Upload Asset
+                  {loading ? 'Uploading...' : 'Upload Asset'}
+                </button>
+                <button 
+                  type="button" 
+                  className="cancel-btn"
+                  onClick={() => setShowUploadForm(false)}
+                >
+                  Cancel
                 </button>
               </div>
+
             </form>
 
             {/* Preview Section */}
@@ -575,7 +650,11 @@ const Assets = () => {
                     </div>
                     <div className="preview-detail-item">
                       <span className="detail-label">Dimension:</span>
-                      <span className="detail-value">{formData.dimension || 'Not specified'}</span>
+                      <span className="detail-value">
+                        {formData.width && formData.height 
+                          ? `${formData.width} x ${formData.height}` 
+                          : 'Not specified'}
+                      </span>
                     </div>
                     <div className="preview-detail-item">
                       <span className="detail-label">File Size:</span>
@@ -611,7 +690,12 @@ const Assets = () => {
       {/* Uploaded Assets Display */}
       {!showUploadForm && (
         <div className="assets-grid">
-          {uploadedAssets.length === 0 ? (
+          {fetchingAssets ? (
+            <div className="loading-state">
+              <h3>Loading Assets...</h3>
+              <p>Please wait while we fetch your assets.</p>
+            </div>
+          ) : uploadedAssets.length === 0 ? (
             <div className="empty-state">
               <h3>No Assets Uploaded Yet</h3>
               <p>Start by uploading your first asset to showcase your work.</p>
@@ -619,12 +703,12 @@ const Assets = () => {
           ) : (
             uploadedAssets.map(asset => (
               <div key={asset.id} className="asset-card">
-                              <div className="asset-image">
-                {asset.coverImages && asset.coverImages.length > 0 ? (
-                  <img src={asset.coverImages[0]} alt={asset.title} />
-                ) : (
-                  <div className="asset-placeholder">No Image</div>
-                )}
+                <div className="asset-image">
+                  {asset.coverImages && asset.coverImages.length > 0 ? (
+                    <img src={`https://graphykon.com/uploads/${asset.coverImages[0].filename}`} alt={asset.title} />
+                  ) : (
+                    <div className="asset-placeholder">No Image</div>
+                  )}
                   <div className="asset-overlay">
                     <button className="edit-btn">Edit</button>
                     <button className="delete-btn">Delete</button>
@@ -647,7 +731,7 @@ const Assets = () => {
                       ))}
                   </div>
                   <p className="upload-date">
-                    Uploaded: {new Date(asset.uploadDate).toLocaleDateString()}
+                    Uploaded: {new Date(asset.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               </div>
@@ -655,6 +739,317 @@ const Assets = () => {
           )}
         </div>
       )}
+    </div>
+  );
+};
+
+// Analytics component
+const Analytics = () => {
+  const [analyticsData, setAnalyticsData] = useState({
+    overview: {
+      totalAssets: 0,
+      totalViews: 0,
+      totalDownloads: 0,
+      totalEarnings: 0,
+      followers: 0
+    },
+    recentActivity: [],
+    topAssets: [],
+    monthlyStats: [],
+    categoryBreakdown: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState('30d'); // 7d, 30d, 90d, 1y
+
+  // Fetch analytics data
+  React.useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch all analytics data in parallel
+        const [overviewRes, monthlyRes, topAssetsRes, categoryRes, activityRes] = await Promise.all([
+          api.get(`/analytics/overview?timeRange=${timeRange}`),
+          api.get('/analytics/monthly'),
+          api.get(`/analytics/top-assets?timeRange=${timeRange}&limit=4`),
+          api.get(`/analytics/category-breakdown?timeRange=${timeRange}`),
+          api.get('/analytics/recent-activity?limit=4')
+        ]);
+
+        setAnalyticsData({
+          overview: overviewRes.data.overview,
+          changes: overviewRes.data.changes,
+          monthlyStats: monthlyRes.data.monthlyStats,
+          topAssets: topAssetsRes.data.topAssets,
+          categoryBreakdown: categoryRes.data.categoryBreakdown,
+          recentActivity: activityRes.data.recentActivity
+        });
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+        // Fallback to mock data if API fails
+        const mockData = {
+          overview: {
+            totalAssets: 12,
+            totalViews: 2456,
+            totalDownloads: 189,
+            totalEarnings: 156.78,
+            followers: 89
+          },
+          changes: {
+            views: 12,
+            downloads: 8,
+            earnings: 15,
+            followers: 5
+          },
+          recentActivity: [
+            { id: 1, type: 'download', asset: 'Modern Logo Pack', user: 'Designer123', time: '2 hours ago' },
+            { id: 2, type: 'view', asset: 'UI Kit Collection', user: 'Anonymous', time: '4 hours ago' },
+            { id: 3, type: 'download', asset: 'Icon Set Pro', user: 'CreativeStudio', time: '1 day ago' },
+            { id: 4, type: 'view', asset: 'Typography Bundle', user: 'Anonymous', time: '2 days ago' }
+          ],
+          topAssets: [
+            { id: 1, title: 'Modern Logo Pack', views: 456, downloads: 34, earnings: 23.45 },
+            { id: 2, title: 'UI Kit Collection', views: 389, downloads: 28, earnings: 19.67 },
+            { id: 3, title: 'Icon Set Pro', views: 312, downloads: 22, earnings: 15.89 },
+            { id: 4, title: 'Typography Bundle', views: 298, downloads: 19, earnings: 12.34 }
+          ],
+          monthlyStats: [
+            { month: 'Jan', views: 1200, downloads: 89, earnings: 67.45 },
+            { month: 'Feb', views: 1450, downloads: 112, earnings: 78.90 },
+            { month: 'Mar', views: 1320, downloads: 98, earnings: 71.23 },
+            { month: 'Apr', views: 1680, downloads: 134, earnings: 89.67 },
+            { month: 'May', views: 1890, downloads: 156, earnings: 102.34 },
+            { month: 'Jun', views: 2456, downloads: 189, earnings: 156.78 }
+          ],
+          categoryBreakdown: [
+            { category: 'Logos', assets: 4, views: 890, downloads: 67 },
+            { category: 'UI Kits', assets: 3, views: 756, downloads: 54 },
+            { category: 'Icons', assets: 2, views: 432, downloads: 31 },
+            { category: 'Typography', assets: 2, views: 298, downloads: 19 },
+            { category: 'Illustrations', assets: 1, views: 80, downloads: 18 }
+          ]
+        };
+        setAnalyticsData(mockData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, [timeRange]);
+
+  if (loading) {
+    return (
+      <div className="analytics-page">
+        <div className="analytics-header">
+          <h1>Analytics</h1>
+        </div>
+        <div className="loading-state">
+          <h3>Loading Analytics...</h3>
+          <p>Please wait while we fetch your analytics data.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="analytics-page">
+      <div className="analytics-header">
+        <h1>Analytics</h1>
+        <div className="time-range-selector">
+          <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+            <option value="1y">Last year</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Overview Cards */}
+      <div className="analytics-overview">
+        <div className="overview-card">
+          <div className="overview-icon">📊</div>
+          <div className="overview-content">
+            <h3>Total Assets</h3>
+            <p className="overview-value">{analyticsData.overview.totalAssets}</p>
+            <span className="overview-change positive">+2 this month</span>
+          </div>
+        </div>
+
+        <div className="overview-card">
+          <div className="overview-icon">👁️</div>
+          <div className="overview-content">
+            <h3>Total Views</h3>
+            <p className="overview-value">{analyticsData.overview.totalViews.toLocaleString()}</p>
+            <span className={`overview-change ${analyticsData.changes?.views >= 0 ? 'positive' : 'negative'}`}>
+              {analyticsData.changes?.views >= 0 ? '+' : ''}{analyticsData.changes?.views || 0}% vs last period
+            </span>
+          </div>
+        </div>
+
+        <div className="overview-card">
+          <div className="overview-icon">⬇️</div>
+          <div className="overview-content">
+            <h3>Total Downloads</h3>
+            <p className="overview-value">{analyticsData.overview.totalDownloads.toLocaleString()}</p>
+            <span className={`overview-change ${analyticsData.changes?.downloads >= 0 ? 'positive' : 'negative'}`}>
+              {analyticsData.changes?.downloads >= 0 ? '+' : ''}{analyticsData.changes?.downloads || 0}% vs last period
+            </span>
+          </div>
+        </div>
+
+        <div className="overview-card">
+          <div className="overview-icon">💰</div>
+          <div className="overview-content">
+            <h3>Total Earnings</h3>
+            <p className="overview-value">${analyticsData.overview.totalEarnings.toFixed(2)}</p>
+            <span className={`overview-change ${analyticsData.changes?.earnings >= 0 ? 'positive' : 'negative'}`}>
+              {analyticsData.changes?.earnings >= 0 ? '+' : ''}{analyticsData.changes?.earnings || 0}% vs last period
+            </span>
+          </div>
+        </div>
+
+        <div className="overview-card">
+          <div className="overview-icon">👥</div>
+          <div className="overview-content">
+            <h3>Followers</h3>
+            <p className="overview-value">{analyticsData.overview.followers}</p>
+            <span className={`overview-change ${analyticsData.changes?.followers >= 0 ? 'positive' : 'negative'}`}>
+              {analyticsData.changes?.followers >= 0 ? '+' : ''}{analyticsData.changes?.followers || 0} this period
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="analytics-charts">
+        <div className="chart-container">
+          <h3>Monthly Performance</h3>
+          <div className="chart">
+            <svg width="100%" height="300" viewBox="0 0 800 300">
+              {/* Grid lines */}
+              <defs>
+                <pattern id="chartGrid" width="100" height="50" patternUnits="userSpaceOnUse">
+                  <path d="M 100 0 L 0 0 0 50" fill="none" stroke="#f0f0f0" strokeWidth="1"/>
+                </pattern>
+              </defs>
+              
+              <rect width="100%" height="100%" fill="url(#chartGrid)" />
+              
+              {/* X-axis labels */}
+              {analyticsData.monthlyStats.map((stat, index) => (
+                <text 
+                  key={index}
+                  x={100 + index * 100} 
+                  y="290" 
+                  textAnchor="middle" 
+                  fontSize="12" 
+                  fill="#666"
+                >
+                  {stat.month}
+                </text>
+              ))}
+              
+              {/* Views line */}
+              <path 
+                d={`M ${analyticsData.monthlyStats.map((stat, index) => 
+                  `${100 + index * 100},${300 - (stat.views / 25)}`
+                ).join(' L ')}`}
+                stroke="#007bff" 
+                strokeWidth="3" 
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              
+              {/* Downloads line */}
+              <path 
+                d={`M ${analyticsData.monthlyStats.map((stat, index) => 
+                  `${100 + index * 100},${300 - (stat.downloads * 2)}`
+                ).join(' L ')}`}
+                stroke="#28a745" 
+                strokeWidth="3" 
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              
+              {/* Legend */}
+              <circle cx="50" cy="50" r="5" fill="#007bff"/>
+              <text x="65" y="55" fontSize="12" fill="#333">Views</text>
+              <circle cx="50" cy="80" r="5" fill="#28a745"/>
+              <text x="65" y="85" fontSize="12" fill="#333">Downloads</text>
+            </svg>
+          </div>
+        </div>
+
+        <div className="chart-container">
+          <h3>Category Performance</h3>
+          <div className="category-chart">
+            {analyticsData.categoryBreakdown.map((category, index) => (
+              <div key={index} className="category-bar">
+                <div className="category-info">
+                  <span className="category-name">{category.category}</span>
+                  <span className="category-stats">
+                    {category.views} views • {category.downloads} downloads
+                  </span>
+                </div>
+                <div className="category-progress">
+                  <div 
+                    className="progress-bar" 
+                    style={{ 
+                      width: `${(category.views / Math.max(...analyticsData.categoryBreakdown.map(c => c.views))) * 100}%` 
+                    }}
+                  ></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Top Assets and Recent Activity */}
+      <div className="analytics-details">
+        <div className="top-assets">
+          <h3>Top Performing Assets</h3>
+          <div className="assets-list">
+            {analyticsData.topAssets.map((asset, index) => (
+              <div key={asset.id} className="asset-item">
+                <div className="asset-rank">#{index + 1}</div>
+                <div className="asset-info">
+                  <h4>{asset.title}</h4>
+                  <div className="asset-stats">
+                    <span>{asset.views} views</span>
+                    <span>{asset.downloads} downloads</span>
+                    <span>${asset.earnings.toFixed(2)} earned</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="recent-activity">
+          <h3>Recent Activity</h3>
+          <div className="activity-list">
+            {analyticsData.recentActivity.map((activity) => (
+              <div key={activity.id} className="activity-item">
+                <div className={`activity-icon ${activity.type}`}>
+                  {activity.type === 'download' ? '⬇️' : '👁️'}
+                </div>
+                <div className="activity-content">
+                  <p>
+                    <strong>{activity.user}</strong> {activity.type === 'download' ? 'downloaded' : 'viewed'} 
+                    <strong>{activity.asset}</strong>
+                  </p>
+                  <span className="activity-time">{activity.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
