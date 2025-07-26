@@ -13,6 +13,9 @@ const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 
+// Trust proxy for rate limiting behind Nginx
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 
