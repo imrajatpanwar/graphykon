@@ -39,17 +39,7 @@ const CreatorDashboard = () => {
         });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        // Fallback to mock data
-        setDashboardData(prev => ({
-          ...prev,
-          followers: Math.floor(Math.random() * 100) + 50,
-          totalUploads: Math.floor(Math.random() * 20) + 5,
-          assetViews: Math.floor(Math.random() * 1000) + 500,
-          downloads: Math.floor(Math.random() * 100) + 20,
-          earnings: (Math.random() * 200 + 50).toFixed(2),
-          copyrights: Math.floor(Math.random() * 10) + 2,
-          lastUpdated: new Date()
-        }));
+        // Don't show dummy data - keep existing data or show empty state
       }
     };
 
@@ -128,7 +118,9 @@ const CreatorDashboard = () => {
                 <h3>Studio Analytics</h3>
                 <div className="metric">
                   <span className="metric-label">Current Followers</span>
-                  <span className="metric-value">{dashboardData.followers}</span>
+                  <span className="metric-value">
+                    {dashboardData.followers > 0 ? dashboardData.followers : 'No data'}
+                  </span>
                 </div>
                 <div className="realtime-indicator">
                   {isRealTimeEnabled && <span className="pulse">●</span>}
@@ -199,23 +191,33 @@ const CreatorDashboard = () => {
                 <div className="summary-metrics">
                   <div className="summary-item">
                     <span className="summary-label">Total Uploads</span>
-                    <span className="summary-value">{dashboardData.totalUploads}</span>
+                    <span className="summary-value">
+                      {dashboardData.totalUploads > 0 ? dashboardData.totalUploads : 'No data'}
+                    </span>
                   </div>
                   <div className="summary-item">
                     <span className="summary-label">Asset Views</span>
-                    <span className="summary-value">{dashboardData.assetViews.toLocaleString()}</span>
+                    <span className="summary-value">
+                      {dashboardData.assetViews > 0 ? dashboardData.assetViews.toLocaleString() : 'No data'}
+                    </span>
                   </div>
                   <div className="summary-item">
                     <span className="summary-label">Downloads</span>
-                    <span className="summary-value">{dashboardData.downloads}</span>
+                    <span className="summary-value">
+                      {dashboardData.downloads > 0 ? dashboardData.downloads : 'No data'}
+                    </span>
                   </div>
                   <div className="summary-item">
                     <span className="summary-label">Earnings</span>
-                    <span className="summary-value">${dashboardData.earnings}</span>
+                    <span className="summary-value">
+                      {dashboardData.earnings > 0 ? `$${dashboardData.earnings}` : 'No data'}
+                    </span>
                   </div>
                   <div className="summary-item">
                     <span className="summary-label">Copyright's</span>
-                    <span className="summary-value">{dashboardData.copyrights}</span>
+                    <span className="summary-value">
+                      {dashboardData.copyrights > 0 ? dashboardData.copyrights : 'No data'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -934,51 +936,7 @@ const Analytics = () => {
         setLastUpdated(new Date());
       } catch (error) {
         console.error('Error fetching analytics:', error);
-        // Fallback to mock data if API fails
-        const mockData = {
-          overview: {
-            totalAssets: 12,
-            totalViews: 2456,
-            totalDownloads: 189,
-            totalEarnings: 156.78,
-            followers: 89
-          },
-          changes: {
-            views: 12,
-            downloads: 8,
-            earnings: 15,
-            followers: 5
-          },
-          recentActivity: [
-            { id: 1, type: 'download', asset: 'Modern Logo Pack', user: 'Designer123', time: '2 hours ago' },
-            { id: 2, type: 'view', asset: 'UI Kit Collection', user: 'Anonymous', time: '4 hours ago' },
-            { id: 3, type: 'download', asset: 'Icon Set Pro', user: 'CreativeStudio', time: '1 day ago' },
-            { id: 4, type: 'view', asset: 'Typography Bundle', user: 'Anonymous', time: '2 days ago' }
-          ],
-          topAssets: [
-            { id: 1, title: 'Modern Logo Pack', views: 456, downloads: 34, earnings: 23.45 },
-            { id: 2, title: 'UI Kit Collection', views: 389, downloads: 28, earnings: 19.67 },
-            { id: 3, title: 'Icon Set Pro', views: 312, downloads: 22, earnings: 15.89 },
-            { id: 4, title: 'Typography Bundle', views: 298, downloads: 19, earnings: 12.34 }
-          ],
-          monthlyStats: [
-            { month: 'Jan', views: 1200, downloads: 89, earnings: 67.45 },
-            { month: 'Feb', views: 1450, downloads: 112, earnings: 78.90 },
-            { month: 'Mar', views: 1320, downloads: 98, earnings: 71.23 },
-            { month: 'Apr', views: 1680, downloads: 134, earnings: 89.67 },
-            { month: 'May', views: 1890, downloads: 156, earnings: 102.34 },
-            { month: 'Jun', views: 2456, downloads: 189, earnings: 156.78 }
-          ],
-          categoryBreakdown: [
-            { category: 'Logos', assets: 4, views: 890, downloads: 67 },
-            { category: 'UI Kits', assets: 3, views: 756, downloads: 54 },
-            { category: 'Icons', assets: 2, views: 432, downloads: 31 },
-            { category: 'Typography', assets: 2, views: 298, downloads: 19 },
-            { category: 'Illustrations', assets: 1, views: 80, downloads: 18 }
-          ]
-        };
-        setAnalyticsData(mockData);
-        setLastUpdated(new Date());
+        // Don't show dummy data - keep existing data or show empty state
       } finally {
         setLoading(false);
       }
@@ -1066,7 +1024,9 @@ const Analytics = () => {
           <div className="overview-icon">📊</div>
           <div className="overview-content">
             <h3>Total Assets</h3>
-            <p className="overview-value">{analyticsData.overview.totalAssets}</p>
+            <p className="overview-value">
+              {analyticsData.overview.totalAssets > 0 ? analyticsData.overview.totalAssets : 'No data'}
+            </p>
             <span className="overview-change positive">+2 this month</span>
           </div>
           {isRealTimeEnabled && <div className="realtime-indicator"><span className="pulse">●</span></div>}
@@ -1076,7 +1036,9 @@ const Analytics = () => {
           <div className="overview-icon">👁️</div>
           <div className="overview-content">
             <h3>Total Views</h3>
-            <p className="overview-value">{analyticsData.overview.totalViews.toLocaleString()}</p>
+            <p className="overview-value">
+              {analyticsData.overview.totalViews > 0 ? analyticsData.overview.totalViews.toLocaleString() : 'No data'}
+            </p>
             <span className={`overview-change ${analyticsData.changes?.views >= 0 ? 'positive' : 'negative'}`}>
               {analyticsData.changes?.views >= 0 ? '+' : ''}{analyticsData.changes?.views || 0}% vs last period
             </span>
@@ -1088,7 +1050,9 @@ const Analytics = () => {
           <div className="overview-icon">⬇️</div>
           <div className="overview-content">
             <h3>Total Downloads</h3>
-            <p className="overview-value">{analyticsData.overview.totalDownloads.toLocaleString()}</p>
+            <p className="overview-value">
+              {analyticsData.overview.totalDownloads > 0 ? analyticsData.overview.totalDownloads.toLocaleString() : 'No data'}
+            </p>
             <span className={`overview-change ${analyticsData.changes?.downloads >= 0 ? 'positive' : 'negative'}`}>
               {analyticsData.changes?.downloads >= 0 ? '+' : ''}{analyticsData.changes?.downloads || 0}% vs last period
             </span>
@@ -1100,7 +1064,9 @@ const Analytics = () => {
           <div className="overview-icon">💰</div>
           <div className="overview-content">
             <h3>Total Earnings</h3>
-            <p className="overview-value">${analyticsData.overview.totalEarnings.toFixed(2)}</p>
+            <p className="overview-value">
+              {analyticsData.overview.totalEarnings > 0 ? `$${analyticsData.overview.totalEarnings.toFixed(2)}` : 'No data'}
+            </p>
             <span className={`overview-change ${analyticsData.changes?.earnings >= 0 ? 'positive' : 'negative'}`}>
               {analyticsData.changes?.earnings >= 0 ? '+' : ''}{analyticsData.changes?.earnings || 0}% vs last period
             </span>
@@ -1112,7 +1078,9 @@ const Analytics = () => {
           <div className="overview-icon">👥</div>
           <div className="overview-content">
             <h3>Followers</h3>
-            <p className="overview-value">{analyticsData.overview.followers}</p>
+            <p className="overview-value">
+              {analyticsData.overview.followers > 0 ? analyticsData.overview.followers : 'No data'}
+            </p>
             <span className={`overview-change ${analyticsData.changes?.followers >= 0 ? 'positive' : 'negative'}`}>
               {analyticsData.changes?.followers >= 0 ? '+' : ''}{analyticsData.changes?.followers || 0} this period
             </span>
