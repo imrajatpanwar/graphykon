@@ -1147,6 +1147,10 @@ const UserSettings = () => {
     setIsSaving(true);
     
     try {
+      console.log('Starting profile update...');
+      console.log('Profile data:', profileData);
+      console.log('Profile image:', profileImage);
+      
       // Create FormData for file upload
       const formDataToSend = new FormData();
       
@@ -1154,13 +1158,17 @@ const UserSettings = () => {
       Object.keys(profileData).forEach(key => {
         if (profileData[key]) {
           formDataToSend.append(key, profileData[key]);
+          console.log(`Added field ${key}:`, profileData[key]);
         }
       });
       
       // Add profile image if selected
       if (profileImage) {
         formDataToSend.append('profileImage', profileImage);
+        console.log('Added profile image:', profileImage.name);
       }
+      
+      console.log('Making API call to /auth/profile...');
       
       // Make API call to update profile
       const response = await api.put('/auth/profile', formDataToSend, {
@@ -1169,14 +1177,20 @@ const UserSettings = () => {
         },
       });
       
+      console.log('API response:', response.data);
+      
       // Update user data in context
       updateUser(response.data.user);
       
       setIsEditing(false);
       setProfileImage(null);
       
+      console.log('Profile update successful!');
+      
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Profile update error details:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
       alert(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setIsSaving(false);
