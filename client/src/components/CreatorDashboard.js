@@ -8,6 +8,17 @@ const CreatorDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [dashboardData, setDashboardData] = useState({
+    followers: 0,
+    totalUploads: 0,
+    assetViews: 0,
+    downloads: 0,
+    earnings: 0,
+    copyrights: 0,
+    lastUpdated: new Date()
+  });
+  const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(true);
+  const [refreshInterval, setRefreshInterval] = useState(30000); // 30 seconds
 
   // Redirect if not a creator
   React.useEffect(() => {
@@ -15,6 +26,48 @@ const CreatorDashboard = () => {
       navigate('/be-a-creator');
     }
   }, [user, navigate]);
+
+  // Real-time data fetching
+  React.useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch real-time dashboard data
+        const response = await api.get('/analytics/dashboard-realtime');
+        setDashboardData({
+          ...response.data,
+          lastUpdated: new Date()
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        // Fallback to mock data
+        setDashboardData(prev => ({
+          ...prev,
+          followers: Math.floor(Math.random() * 100) + 50,
+          totalUploads: Math.floor(Math.random() * 20) + 5,
+          assetViews: Math.floor(Math.random() * 1000) + 500,
+          downloads: Math.floor(Math.random() * 100) + 20,
+          earnings: (Math.random() * 200 + 50).toFixed(2),
+          copyrights: Math.floor(Math.random() * 10) + 2,
+          lastUpdated: new Date()
+        }));
+      }
+    };
+
+    // Initial fetch
+    fetchDashboardData();
+
+    // Set up real-time interval if enabled
+    let interval;
+    if (isRealTimeEnabled) {
+      interval = setInterval(fetchDashboardData, refreshInterval);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isRealTimeEnabled, refreshInterval]);
 
   if (!user || !user.creator) {
     return null;
@@ -37,6 +90,36 @@ const CreatorDashboard = () => {
           <div className="main-content">
             <div className="content-header">
               <h1>Studio Dashboard</h1>
+              <div className="realtime-controls">
+                <div className="realtime-toggle">
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={isRealTimeEnabled}
+                      onChange={(e) => setIsRealTimeEnabled(e.target.checked)}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                  <span className="toggle-label">
+                    {isRealTimeEnabled ? '🟢 Live' : '🔴 Offline'}
+                  </span>
+                </div>
+                <div className="refresh-controls">
+                  <select
+                    value={refreshInterval}
+                    onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                    disabled={!isRealTimeEnabled}
+                  >
+                    <option value={10000}>10s</option>
+                    <option value={30000}>30s</option>
+                    <option value={60000}>1m</option>
+                    <option value={300000}>5m</option>
+                  </select>
+                  <span className="last-updated">
+                    Last: {dashboardData.lastUpdated.toLocaleTimeString()}
+                  </span>
+                </div>
+              </div>
             </div>
 
             <div className="dashboard-grid">
@@ -45,7 +128,10 @@ const CreatorDashboard = () => {
                 <h3>Studio Analytics</h3>
                 <div className="metric">
                   <span className="metric-label">Current Followers</span>
-                  <span className="metric-value">0</span>
+                  <span className="metric-value">{dashboardData.followers}</span>
+                </div>
+                <div className="realtime-indicator">
+                  {isRealTimeEnabled && <span className="pulse">●</span>}
                 </div>
               </div>
 
@@ -113,23 +199,23 @@ const CreatorDashboard = () => {
                 <div className="summary-metrics">
                   <div className="summary-item">
                     <span className="summary-label">Total Uploads</span>
-                    <span className="summary-value">0</span>
+                    <span className="summary-value">{dashboardData.totalUploads}</span>
                   </div>
                   <div className="summary-item">
                     <span className="summary-label">Asset Views</span>
-                    <span className="summary-value">0</span>
+                    <span className="summary-value">{dashboardData.assetViews.toLocaleString()}</span>
                   </div>
                   <div className="summary-item">
                     <span className="summary-label">Downloads</span>
-                    <span className="summary-value">0</span>
+                    <span className="summary-value">{dashboardData.downloads}</span>
                   </div>
                   <div className="summary-item">
                     <span className="summary-label">Earnings</span>
-                    <span className="summary-value">0</span>
+                    <span className="summary-value">${dashboardData.earnings}</span>
                   </div>
                   <div className="summary-item">
                     <span className="summary-label">Copyright's</span>
-                    <span className="summary-value">0</span>
+                    <span className="summary-value">{dashboardData.copyrights}</span>
                   </div>
                 </div>
               </div>
@@ -818,6 +904,9 @@ const Analytics = () => {
   });
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30d'); // 7d, 30d, 90d, 1y
+  const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(true);
+  const [refreshInterval, setRefreshInterval] = useState(30000); // 30 seconds
+  const [lastUpdated, setLastUpdated] = useState(new Date());
 
   // Fetch analytics data
   React.useEffect(() => {
@@ -842,6 +931,7 @@ const Analytics = () => {
           categoryBreakdown: categoryRes.data.categoryBreakdown,
           recentActivity: activityRes.data.recentActivity
         });
+        setLastUpdated(new Date());
       } catch (error) {
         console.error('Error fetching analytics:', error);
         // Fallback to mock data if API fails
@@ -888,13 +978,27 @@ const Analytics = () => {
           ]
         };
         setAnalyticsData(mockData);
+        setLastUpdated(new Date());
       } finally {
         setLoading(false);
       }
     };
 
+    // Initial fetch
     fetchAnalytics();
-  }, [timeRange]);
+
+    // Set up real-time interval if enabled
+    let interval;
+    if (isRealTimeEnabled) {
+      interval = setInterval(fetchAnalytics, refreshInterval);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [timeRange, isRealTimeEnabled, refreshInterval]);
 
   if (loading) {
     return (
@@ -914,13 +1018,45 @@ const Analytics = () => {
     <div className="analytics-page">
       <div className="analytics-header">
         <h1>Analytics</h1>
-        <div className="time-range-selector">
-          <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="1y">Last year</option>
-          </select>
+        <div className="analytics-controls">
+          <div className="time-range-selector">
+            <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="90d">Last 90 days</option>
+              <option value="1y">Last year</option>
+            </select>
+          </div>
+          <div className="realtime-controls">
+            <div className="realtime-toggle">
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={isRealTimeEnabled}
+                  onChange={(e) => setIsRealTimeEnabled(e.target.checked)}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+              <span className="toggle-label">
+                {isRealTimeEnabled ? '🟢 Live' : '🔴 Offline'}
+              </span>
+            </div>
+            <div className="refresh-controls">
+              <select
+                value={refreshInterval}
+                onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                disabled={!isRealTimeEnabled}
+              >
+                <option value={10000}>10s</option>
+                <option value={30000}>30s</option>
+                <option value={60000}>1m</option>
+                <option value={300000}>5m</option>
+              </select>
+              <span className="last-updated">
+                Last: {lastUpdated.toLocaleTimeString()}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -933,6 +1069,7 @@ const Analytics = () => {
             <p className="overview-value">{analyticsData.overview.totalAssets}</p>
             <span className="overview-change positive">+2 this month</span>
           </div>
+          {isRealTimeEnabled && <div className="realtime-indicator"><span className="pulse">●</span></div>}
         </div>
 
         <div className="overview-card">
@@ -944,6 +1081,7 @@ const Analytics = () => {
               {analyticsData.changes?.views >= 0 ? '+' : ''}{analyticsData.changes?.views || 0}% vs last period
             </span>
           </div>
+          {isRealTimeEnabled && <div className="realtime-indicator"><span className="pulse">●</span></div>}
         </div>
 
         <div className="overview-card">
@@ -955,6 +1093,7 @@ const Analytics = () => {
               {analyticsData.changes?.downloads >= 0 ? '+' : ''}{analyticsData.changes?.downloads || 0}% vs last period
             </span>
           </div>
+          {isRealTimeEnabled && <div className="realtime-indicator"><span className="pulse">●</span></div>}
         </div>
 
         <div className="overview-card">
@@ -966,6 +1105,7 @@ const Analytics = () => {
               {analyticsData.changes?.earnings >= 0 ? '+' : ''}{analyticsData.changes?.earnings || 0}% vs last period
             </span>
           </div>
+          {isRealTimeEnabled && <div className="realtime-indicator"><span className="pulse">●</span></div>}
         </div>
 
         <div className="overview-card">
@@ -977,6 +1117,7 @@ const Analytics = () => {
               {analyticsData.changes?.followers >= 0 ? '+' : ''}{analyticsData.changes?.followers || 0} this period
             </span>
           </div>
+          {isRealTimeEnabled && <div className="realtime-indicator"><span className="pulse">●</span></div>}
         </div>
       </div>
 

@@ -103,8 +103,13 @@
   min-height: 100vh;
 }
 
+/* Content Header */
 .content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 2rem;
+  padding: 0 2rem;
 }
 
 .content-header h1 {
@@ -112,6 +117,127 @@
   font-weight: 700;
   color: #333;
   margin: 0;
+}
+
+/* Real-time Controls */
+.realtime-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.realtime-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #28a745;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(26px);
+}
+
+.toggle-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.refresh-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.refresh-controls select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.9rem;
+  color: #333;
+  cursor: pointer;
+}
+
+.refresh-controls select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.last-updated {
+  font-size: 0.8rem;
+  color: #666;
+  font-style: italic;
+}
+
+/* Real-time Indicators */
+.realtime-indicator {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.pulse {
+  color: #28a745;
+  font-size: 1.2rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Update card positioning for real-time indicator */
+.analytics-card {
+  position: relative;
 }
 
 /* Dashboard Grid */
@@ -1303,15 +1429,26 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e9ecef;
+  padding: 0 2rem;
 }
 
 .analytics-header h1 {
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #333;
   margin: 0;
+}
+
+.analytics-controls {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.time-range-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .time-range-selector select {
@@ -1347,6 +1484,7 @@
   align-items: center;
   gap: 1rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
 }
 
 .overview-card:hover {
