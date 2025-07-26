@@ -325,6 +325,54 @@ const Assets = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Client-side validation
+    if (!formData.title.trim()) {
+      alert('Title is required');
+      return;
+    }
+    
+    if (!formData.description.trim()) {
+      alert('Description is required');
+      return;
+    }
+    
+    if (!formData.tags.trim()) {
+      alert('Tags are required');
+      return;
+    }
+    
+    if (!formData.category) {
+      alert('Category is required');
+      return;
+    }
+    
+    if (!formData.width.trim()) {
+      alert('Width is required');
+      return;
+    }
+    
+    if (!formData.height.trim()) {
+      alert('Height is required');
+      return;
+    }
+    
+    if (!mainFile) {
+      alert('Main file is required');
+      return;
+    }
+    
+    if (coverImages.length === 0) {
+      alert('At least one cover image is required');
+      return;
+    }
+    
+    // Check if at least one format is selected
+    const hasFormat = Object.values(formData.formats).some(format => format);
+    if (!hasFormat) {
+      alert('At least one format must be selected');
+      return;
+    }
+    
     try {
       setLoading(true);
       // Create FormData for file upload
@@ -386,7 +434,14 @@ const Assets = () => {
       
     } catch (error) {
       console.error('Upload error:', error);
-      alert(error.response?.data?.message || 'Failed to upload asset');
+      
+      if (error.response?.data?.errors) {
+        // Show validation errors
+        const errorMessages = error.response.data.errors.map(err => `${err.param}: ${err.msg}`).join('\n');
+        alert(`Validation errors:\n${errorMessages}`);
+      } else {
+        alert(error.response?.data?.message || 'Failed to upload asset');
+      }
     } finally {
       setLoading(false);
     }

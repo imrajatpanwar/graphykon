@@ -28,7 +28,7 @@ const assetSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Category is required'],
     trim: true,
-    enum: ['graphics', 'illustrations', 'templates', 'icons', 'textures', 'other']
+    enum: ['Logo', 'UI Kit', 'Illustration', 'Icon Set', 'Template', 'Mockup', 'Other']
   },
   width: {
     type: String,

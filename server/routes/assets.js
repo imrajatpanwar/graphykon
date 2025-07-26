@@ -35,7 +35,11 @@ const fileFilter = (req, file, cb) => {
     'application/postscript',
     'application/zip',
     'application/x-rar-compressed',
-    'application/octet-stream' // For PSD files
+    'application/octet-stream', // For PSD files
+    'application/illustrator', // For AI files
+    'application/x-illustrator', // Alternative MIME type for AI files
+    'application/eps', // For EPS files
+    'application/x-eps' // Alternative MIME type for EPS files
   ];
   
   if (allowedTypes.includes(file.mimetype)) {
@@ -57,10 +61,25 @@ const upload = multer({
 // @route   POST /api/assets/upload
 // @desc    Upload a new asset
 // @access  Private
-router.post('/upload', protect, upload.fields([
-  { name: 'mainFile', maxCount: 1 },
-  { name: 'coverImages', maxCount: 4 }
-]), [
+router.post('/upload', protect, (req, res, next) => {
+  upload.fields([
+    { name: 'mainFile', maxCount: 1 },
+    { name: 'coverImages', maxCount: 4 }
+  ])(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ message: 'File size too large' });
+      }
+      if (err.code === 'LIMIT_FILE_COUNT') {
+        return res.status(400).json({ message: 'Too many files uploaded' });
+      }
+      return res.status(400).json({ message: err.message });
+    } else if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+}, [
   body('title')
     .trim()
     .isLength({ min: 1, max: 100 })
@@ -75,7 +94,7 @@ router.post('/upload', protect, upload.fields([
     .withMessage('Tags must be between 1 and 200 characters'),
   body('category')
     .trim()
-    .isIn(['graphics', 'illustrations', 'templates', 'icons', 'textures', 'other'])
+    .isIn(['Logo', 'UI Kit', 'Illustration', 'Icon Set', 'Template', 'Mockup', 'Other'])
     .withMessage('Invalid category'),
   body('width')
     .trim()
@@ -87,24 +106,24 @@ router.post('/upload', protect, upload.fields([
     .withMessage('Height is required'),
   body('credit')
     .optional()
-    .isBoolean()
-    .withMessage('Credit must be a boolean'),
+    .isIn(['true', 'false'])
+    .withMessage('Credit must be true or false'),
   body('formats.jpg')
     .optional()
-    .isBoolean()
-    .withMessage('JPG format must be a boolean'),
+    .isIn(['true', 'false'])
+    .withMessage('JPG format must be true or false'),
   body('formats.png')
     .optional()
-    .isBoolean()
-    .withMessage('PNG format must be a boolean'),
+    .isIn(['true', 'false'])
+    .withMessage('PNG format must be true or false'),
   body('formats.psd')
     .optional()
-    .isBoolean()
-    .withMessage('PSD format must be a boolean'),
+    .isIn(['true', 'false'])
+    .withMessage('PSD format must be true or false'),
   body('formats.pdf')
     .optional()
-    .isBoolean()
-    .withMessage('PDF format must be a boolean')
+    .isIn(['true', 'false'])
+    .withMessage('PDF format must be true or false')
 ], async (req, res) => {
   try {
     // Check for validation errors
@@ -126,6 +145,19 @@ router.post('/upload', protect, upload.fields([
       return res.status(400).json({ message: 'Main file and cover images are required' });
     }
 
+    // Check if at least one format is selected
+    const formats = {
+      jpg: req.body['formats.jpg'] === 'true',
+      png: req.body['formats.png'] === 'true',
+      psd: req.body['formats.psd'] === 'true',
+      pdf: req.body['formats.pdf'] === 'true'
+    };
+    
+    const hasFormat = Object.values(formats).some(format => format);
+    if (!hasFormat) {
+      return res.status(400).json({ message: 'At least one format must be selected' });
+    }
+
     const mainFile = req.files.mainFile[0];
     const coverImages = req.files.coverImages;
 
@@ -134,11 +166,11 @@ router.post('/upload', protect, upload.fields([
       return res.status(400).json({ message: 'Main file size exceeds 500MB limit' });
     }
 
-    coverImages.forEach(image => {
+    for (const image of coverImages) {
       if (image.size > 10 * 1024 * 1024) { // 10MB limit for cover images
         return res.status(400).json({ message: 'Cover image size exceeds 10MB limit' });
       }
-    });
+    }
 
     // Create asset object
     const assetData = {
@@ -150,12 +182,7 @@ router.post('/upload', protect, upload.fields([
       width: req.body.width,
       height: req.body.height,
       credit: req.body.credit === 'true',
-      formats: {
-        jpg: req.body['formats.jpg'] === 'true',
-        png: req.body['formats.png'] === 'true',
-        psd: req.body['formats.psd'] === 'true',
-        pdf: req.body['formats.pdf'] === 'true'
-      },
+      formats: formats,
       mainFile: {
         filename: mainFile.filename,
         originalName: mainFile.originalname,
