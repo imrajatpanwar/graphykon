@@ -4,6 +4,22 @@ import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 import './CreatorDashboard.css';
 
+// Utility function to get the correct image URL
+const getImageUrl = (filename) => {
+  if (!filename) return null;
+  
+  // If it's already a complete URL, return as is
+  if (filename.startsWith('http://') || filename.startsWith('https://')) {
+    return filename;
+  }
+  
+  // Remove any leading slashes from filename
+  const cleanFilename = filename.replace(/^\/+/, '');
+  
+  // The server serves static files at /uploads/, so construct the URL accordingly
+  return `https://graphykon.com/uploads/${cleanFilename}`;
+};
+
 const CreatorDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -17,8 +33,6 @@ const CreatorDashboard = () => {
     copyrights: 0,
     lastUpdated: new Date()
   });
-  const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(true);
-  const [refreshInterval, setRefreshInterval] = useState(30000); // 30 seconds
 
   // Redirect if not a creator
   React.useEffect(() => {
@@ -27,11 +41,11 @@ const CreatorDashboard = () => {
     }
   }, [user, navigate]);
 
-  // Real-time data fetching
+  // Data fetching
   React.useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch real-time dashboard data
+        // Fetch dashboard data
         const response = await api.get('/analytics/dashboard-realtime');
         setDashboardData({
           ...response.data,
@@ -45,19 +59,7 @@ const CreatorDashboard = () => {
 
     // Initial fetch
     fetchDashboardData();
-
-    // Set up real-time interval if enabled
-    let interval;
-    if (isRealTimeEnabled) {
-      interval = setInterval(fetchDashboardData, refreshInterval);
-    }
-
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [isRealTimeEnabled, refreshInterval]);
+  }, []);
 
   if (!user || !user.creator) {
     return null;
@@ -80,36 +82,6 @@ const CreatorDashboard = () => {
           <div className="main-content">
             <div className="content-header">
               <h1>Studio Dashboard</h1>
-              <div className="realtime-controls">
-                <div className="realtime-toggle">
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={isRealTimeEnabled}
-                      onChange={(e) => setIsRealTimeEnabled(e.target.checked)}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                  <span className="toggle-label">
-                    {isRealTimeEnabled ? '🟢 Live' : '🔴 Offline'}
-                  </span>
-                </div>
-                <div className="refresh-controls">
-                  <select
-                    value={refreshInterval}
-                    onChange={(e) => setRefreshInterval(Number(e.target.value))}
-                    disabled={!isRealTimeEnabled}
-                  >
-                    <option value={10000}>10s</option>
-                    <option value={30000}>30s</option>
-                    <option value={60000}>1m</option>
-                    <option value={300000}>5m</option>
-                  </select>
-                  <span className="last-updated">
-                    Last: {dashboardData.lastUpdated.toLocaleTimeString()}
-                  </span>
-                </div>
-              </div>
             </div>
 
             <div className="dashboard-grid">
@@ -121,9 +93,6 @@ const CreatorDashboard = () => {
                   <span className="metric-value">
                     {dashboardData.followers > 0 ? dashboardData.followers : 'No data'}
                   </span>
-                </div>
-                <div className="realtime-indicator">
-                  {isRealTimeEnabled && <span className="pulse">●</span>}
                 </div>
               </div>
 
@@ -351,10 +320,43 @@ const Assets = () => {
 
   // Fetch assets on component mount
   React.useEffect(() => {
+    const testUploadsEndpoint = async () => {
+      try {
+        // Test if uploads endpoint is accessible
+        const testResponse = await fetch('https://graphykon.com/uploads/', {
+          method: 'HEAD',
+          mode: 'cors'
+        });
+        console.log('Uploads endpoint test:', testResponse.status);
+      } catch (error) {
+        console.error('Uploads endpoint test failed:', error);
+      }
+    };
+
     const fetchAssets = async () => {
       try {
         setFetchingAssets(true);
+        
+        // Test uploads endpoint first
+        await testUploadsEndpoint();
+        
         const response = await api.get('/assets');
+        console.log('=== ASSETS FETCH RESPONSE ===');
+        console.log('Response data:', response.data);
+        console.log('Assets array:', response.data.assets);
+        console.log('Assets count:', response.data.assets?.length || 0);
+        
+        if (response.data.assets && response.data.assets.length > 0) {
+          console.log('=== FIRST ASSET DETAILS ===');
+          console.log('Full asset:', response.data.assets[0]);
+          console.log('Cover images:', response.data.assets[0].coverImages);
+          if (response.data.assets[0].coverImages && response.data.assets[0].coverImages.length > 0) {
+            console.log('First cover image:', response.data.assets[0].coverImages[0]);
+            console.log('Constructed URL:', getImageUrl(response.data.assets[0].coverImages[0].filename));
+          }
+          console.log('===========================');
+        }
+        console.log('=============================');
         setUploadedAssets(response.data.assets);
       } catch (error) {
         console.error('Error fetching assets:', error);
@@ -851,7 +853,34 @@ const Assets = () => {
               <div key={asset.id} className="asset-card">
                 <div className="asset-image">
                   {asset.coverImages && asset.coverImages.length > 0 ? (
-                    <img src={`https://graphykon.com/uploads/${asset.coverImages[0].filename}`} alt={asset.title} />
+                    <>
+                      <img 
+                        src={getImageUrl(asset.coverImages[0].filename)} 
+                        alt={asset.title} 
+                        onError={(e) => {
+                          console.error('=== IMAGE LOAD ERROR ===');
+                          console.error('Failed URL:', e.target.src);
+                          console.error('Asset coverImages[0]:', asset.coverImages[0]);
+                          console.error('Filename:', asset.coverImages[0].filename);
+                          console.error('========================');
+                          
+                          // Show placeholder
+                          e.target.style.display = 'none';
+                          e.target.nextElementSibling.style.display = 'block';
+                        }} 
+                        onLoad={() => {
+                          console.log('✓ Image loaded successfully:', asset.title);
+                        }}
+                        style={{maxWidth: '100%', height: 'auto'}}
+                      />
+                      <div className="asset-placeholder" style={{display: 'none'}}>
+                        Image Not Available
+                        <br />
+                        <small>File: {asset.coverImages[0].filename}</small>
+                        <br />
+                        <small>URL: {getImageUrl(asset.coverImages[0].filename)}</small>
+                      </div>
+                    </>
                   ) : (
                     <div className="asset-placeholder">No Image</div>
                   )}
@@ -906,9 +935,6 @@ const Analytics = () => {
   });
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30d'); // 7d, 30d, 90d, 1y
-  const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(true);
-  const [refreshInterval, setRefreshInterval] = useState(30000); // 30 seconds
-  const [lastUpdated, setLastUpdated] = useState(new Date());
 
   // Fetch analytics data
   React.useEffect(() => {
@@ -933,7 +959,6 @@ const Analytics = () => {
           categoryBreakdown: categoryRes.data.categoryBreakdown,
           recentActivity: activityRes.data.recentActivity
         });
-        setLastUpdated(new Date());
       } catch (error) {
         console.error('Error fetching analytics:', error);
         // Don't show dummy data - keep existing data or show empty state
@@ -944,19 +969,7 @@ const Analytics = () => {
 
     // Initial fetch
     fetchAnalytics();
-
-    // Set up real-time interval if enabled
-    let interval;
-    if (isRealTimeEnabled) {
-      interval = setInterval(fetchAnalytics, refreshInterval);
-    }
-
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [timeRange, isRealTimeEnabled, refreshInterval]);
+  }, [timeRange]);
 
   if (loading) {
     return (
@@ -985,36 +998,6 @@ const Analytics = () => {
               <option value="1y">Last year</option>
             </select>
           </div>
-          <div className="realtime-controls">
-            <div className="realtime-toggle">
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={isRealTimeEnabled}
-                  onChange={(e) => setIsRealTimeEnabled(e.target.checked)}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-              <span className="toggle-label">
-                {isRealTimeEnabled ? '🟢 Live' : '🔴 Offline'}
-              </span>
-            </div>
-            <div className="refresh-controls">
-              <select
-                value={refreshInterval}
-                onChange={(e) => setRefreshInterval(Number(e.target.value))}
-                disabled={!isRealTimeEnabled}
-              >
-                <option value={10000}>10s</option>
-                <option value={30000}>30s</option>
-                <option value={60000}>1m</option>
-                <option value={300000}>5m</option>
-              </select>
-              <span className="last-updated">
-                Last: {lastUpdated.toLocaleTimeString()}
-              </span>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -1029,7 +1012,6 @@ const Analytics = () => {
             </p>
             <span className="overview-change positive">+2 this month</span>
           </div>
-          {isRealTimeEnabled && <div className="realtime-indicator"><span className="pulse">●</span></div>}
         </div>
 
         <div className="overview-card">
@@ -1043,7 +1025,6 @@ const Analytics = () => {
               {analyticsData.changes?.views >= 0 ? '+' : ''}{analyticsData.changes?.views || 0}% vs last period
             </span>
           </div>
-          {isRealTimeEnabled && <div className="realtime-indicator"><span className="pulse">●</span></div>}
         </div>
 
         <div className="overview-card">
@@ -1057,7 +1038,6 @@ const Analytics = () => {
               {analyticsData.changes?.downloads >= 0 ? '+' : ''}{analyticsData.changes?.downloads || 0}% vs last period
             </span>
           </div>
-          {isRealTimeEnabled && <div className="realtime-indicator"><span className="pulse">●</span></div>}
         </div>
 
         <div className="overview-card">
@@ -1071,7 +1051,6 @@ const Analytics = () => {
               {analyticsData.changes?.earnings >= 0 ? '+' : ''}{analyticsData.changes?.earnings || 0}% vs last period
             </span>
           </div>
-          {isRealTimeEnabled && <div className="realtime-indicator"><span className="pulse">●</span></div>}
         </div>
 
         <div className="overview-card">
@@ -1085,7 +1064,6 @@ const Analytics = () => {
               {analyticsData.changes?.followers >= 0 ? '+' : ''}{analyticsData.changes?.followers || 0} this period
             </span>
           </div>
-          {isRealTimeEnabled && <div className="realtime-indicator"><span className="pulse">●</span></div>}
         </div>
       </div>
 
