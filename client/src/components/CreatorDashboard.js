@@ -156,7 +156,10 @@ const CreatorDashboard = () => {
         <div className="profile-section">
           <div className="avatar">
             {user.profileImage ? (
-              <img src={user.profileImage} alt="Profile" />
+              <img 
+                src={user.profileImage.startsWith('data:') ? user.profileImage : `https://graphykon.com${user.profileImage}`} 
+                alt="Profile" 
+              />
             ) : (
               <div className="avatar-placeholder">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
@@ -1111,7 +1114,7 @@ const Analytics = () => {
 
 // UserSettings component
 const UserSettings = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     username: user?.username || '',
@@ -1144,20 +1147,37 @@ const UserSettings = () => {
     setIsSaving(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Create FormData for file upload
+      const formDataToSend = new FormData();
       
-      // Update local state
-      setProfileData(prev => ({
-        ...prev,
-        profileImage: profileImage ? URL.createObjectURL(profileImage) : user?.profileImage
-      }));
+      // Add text fields
+      Object.keys(profileData).forEach(key => {
+        if (profileData[key]) {
+          formDataToSend.append(key, profileData[key]);
+        }
+      });
+      
+      // Add profile image if selected
+      if (profileImage) {
+        formDataToSend.append('profileImage', profileImage);
+      }
+      
+      // Make API call to update profile
+      const response = await api.put('/auth/profile', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      // Update user data in context
+      updateUser(response.data.user);
       
       setIsEditing(false);
-      // Here you would typically make an API call to update the user profile
-      console.log('Profile updated:', profileData);
+      setProfileImage(null);
+      
     } catch (error) {
       console.error('Error updating profile:', error);
+      alert(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setIsSaving(false);
     }
@@ -1215,7 +1235,7 @@ const UserSettings = () => {
             <div className="profile-image-container">
               {(profileImage ? URL.createObjectURL(profileImage) : user?.profileImage) ? (
                 <img 
-                  src={profileImage ? URL.createObjectURL(profileImage) : user?.profileImage} 
+                  src={profileImage ? URL.createObjectURL(profileImage) : (user?.profileImage?.startsWith('data:') ? user.profileImage : `https://graphykon.com${user.profileImage}`)} 
                   alt="Profile" 
                   className="profile-image"
                 />

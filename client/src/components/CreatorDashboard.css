@@ -737,9 +737,11 @@
 
 /* Assets Grid */
 .assets-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   gap: 1.5rem;
+  overflow-x: auto;
 }
 
 /* Empty State */
@@ -781,11 +783,16 @@
 
 /* Asset Cards */
 .asset-card {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-width: 300px;
   background: white;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .asset-card:hover {
@@ -794,9 +801,13 @@
 }
 
 .asset-image {
-  position: relative;
+  flex: 0 0 200px;
   height: 200px;
   overflow: hidden;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .asset-image img {
@@ -818,17 +829,17 @@
 
 .asset-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  right: 1rem;
+  bottom: 1rem;
+  left: auto;
+  top: auto;
+  background: none;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  flex-direction: row;
+  gap: 0.5rem;
+  opacity: 1;
+  transition: none;
+  z-index: 2;
 }
 
 .asset-card:hover .asset-overlay {
@@ -865,7 +876,12 @@
 }
 
 .asset-info {
-  padding: 1.5rem;
+  flex: 1 1 auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  position: relative;
 }
 
 .asset-info h3 {
@@ -926,6 +942,9 @@
 }
 
 .upload-date {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
   color: #999;
   font-size: 0.85rem;
   margin: 0;
