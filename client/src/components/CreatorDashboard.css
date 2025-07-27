@@ -1347,6 +1347,36 @@ input:checked + .toggle-slider:before {
   height: 100%;
 }
 
+.image-requirements {
+  margin-top: 0.5rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.delete-profile-image-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.delete-profile-image-btn:hover {
+  background: #c82333;
+  transform: scale(1.1);
+}
+
 .profile-form {
   display: flex;
   flex-direction: column;

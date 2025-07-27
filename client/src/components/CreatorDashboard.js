@@ -1297,10 +1297,10 @@ const UserSettings = () => {
   const handleProfileImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Check file size (5MB limit)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      // Check file size (500KB limit)
+      const maxSize = 500 * 1024; // 500KB in bytes
       if (file.size > maxSize) {
-        alert('Profile image must be less than 5MB');
+        alert('Profile image must be less than 500KB');
         e.target.value = '';
         return;
       }
@@ -1312,7 +1312,37 @@ const UserSettings = () => {
         return;
       }
       
-      setProfileImage(file);
+      // Check image dimensions
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        
+        // Check if image is square
+        if (img.width !== img.height) {
+          alert('Profile image must be square (same width and height)');
+          e.target.value = '';
+          return;
+        }
+        
+        // Check if dimensions are within allowed range
+        if (img.width < 300 || img.width > 1080) {
+          alert('Profile image dimensions must be between 300x300 and 1080x1080 pixels');
+          e.target.value = '';
+          return;
+        }
+        
+        setProfileImage(file);
+      };
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        alert('Invalid image file. Please select a valid image.');
+        e.target.value = '';
+      };
+      
+      img.src = url;
     }
   };
 
@@ -1384,6 +1414,25 @@ const UserSettings = () => {
     setIsEditing(false);
   };
 
+  const handleDeleteProfileImage = async () => {
+    if (!window.confirm('Are you sure you want to remove your profile image?')) {
+      return;
+    }
+
+    try {
+      const response = await api.delete('/auth/profile-image');
+      
+      // Update user data in context
+      updateUser(response.data.user);
+      
+      alert('Profile image removed successfully!');
+      
+    } catch (error) {
+      console.error('Profile image deletion error:', error);
+      alert(error.response?.data?.message || 'Failed to remove profile image');
+    }
+  };
+
   return (
     <div className="user-settings">
       <div className="settings-header">
@@ -1442,21 +1491,37 @@ const UserSettings = () => {
                 </svg>
               </div>
               {isEditing && (
-                <div className="image-upload-overlay">
-                  <label htmlFor="profileImageUpload" className="upload-label">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19 7v2.99s-1.99.01-2 0V7h-3s.01-1.99 0-2h3V2h2v3h3v2h-3zm-3 4V8h-3V5H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8h-3zM5 19l3-4 2 3 3-4 4 5H5z"/>
-                    </svg>
-                    Change Photo
-                  </label>
-                  <input
-                    type="file"
-                    id="profileImageUpload"
-                    accept="image/*"
-                    onChange={handleProfileImageChange}
-                    style={{ display: 'none' }}
-                  />
-                </div>
+                <>
+                  <div className="image-upload-overlay">
+                    <label htmlFor="profileImageUpload" className="upload-label">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 7v2.99s-1.99.01-2 0V7h-3s.01-1.99 0-2h3V2h2v3h3v2h-3zm-3 4V8h-3V5H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8h-3zM5 19l3-4 2 3 3-4 4 5H5z"/>
+                      </svg>
+                      Change Photo
+                    </label>
+                    <div className="image-requirements">
+                      <small>Square image, 300x300 to 1080x1080px, max 500KB</small>
+                    </div>
+                    <input
+                      type="file"
+                      id="profileImageUpload"
+                      accept="image/*"
+                      onChange={handleProfileImageChange}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+                  {user?.profileImage && (
+                    <button 
+                      className="delete-profile-image-btn"
+                      onClick={handleDeleteProfileImage}
+                      title="Remove profile image"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                      </svg>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>

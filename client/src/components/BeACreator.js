@@ -77,14 +77,59 @@ const BeACreator = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProfileImage(file);
+      // Check file size (500KB limit)
+      const maxSize = 500 * 1024; // 500KB in bytes
+      if (file.size > maxSize) {
+        alert('Profile image must be less than 500KB');
+        e.target.value = '';
+        return;
+      }
       
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        e.target.value = '';
+        return;
+      }
+      
+      // Check image dimensions
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        
+        // Check if image is square
+        if (img.width !== img.height) {
+          alert('Profile image must be square (same width and height)');
+          e.target.value = '';
+          return;
+        }
+        
+        // Check if dimensions are within allowed range
+        if (img.width < 300 || img.width > 1080) {
+          alert('Profile image dimensions must be between 300x300 and 1080x1080 pixels');
+          e.target.value = '';
+          return;
+        }
+        
+        setProfileImage(file);
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
       };
-      reader.readAsDataURL(file);
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        alert('Invalid image file. Please select a valid image.');
+        e.target.value = '';
+      };
+      
+      img.src = url;
     }
   };
 
@@ -260,6 +305,7 @@ const BeACreator = () => {
               onChange={handleImageChange}
               className="file-input"
             />
+            <small className="image-requirements">Square image, 300x300 to 1080x1080px, max 500KB</small>
             {imagePreview && (
               <div className="image-preview">
                 <img src={imagePreview} alt="Profile preview" />

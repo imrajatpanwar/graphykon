@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const sharp = require('sharp');
 const User = require('../models/User');
 const { protect, generateToken } = require('../middleware/auth');
 
@@ -33,9 +34,72 @@ const profileUpload = multer({
     }
   },
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
+    fileSize: 500 * 1024 // 500KB limit
   }
 });
+
+// Utility function to delete old profile image
+const deleteOldProfileImage = (profileImagePath) => {
+  if (!profileImagePath) return;
+  
+  try {
+    if (profileImagePath.startsWith('/uploads/profiles/')) {
+      // File stored in uploads directory
+      const oldImagePath = path.join(__dirname, '..', profileImagePath);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+        console.log('Deleted old profile image:', oldImagePath);
+      }
+    } else if (profileImagePath.startsWith('data:')) {
+      // Base64 data - no file to delete, but we can log it
+      console.log('Replacing base64 profile image');
+    }
+  } catch (error) {
+    console.error('Error deleting old profile image:', error);
+    // Don't throw error, just log it
+  }
+};
+
+// Middleware to validate image dimensions
+const validateImageDimensions = async (req, res, next) => {
+  if (!req.file) {
+    return next();
+  }
+
+  try {
+    const metadata = await sharp(req.file.path).metadata();
+    const { width, height } = metadata;
+
+    // Check if image is square
+    if (width !== height) {
+      // Delete the uploaded file
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ 
+        message: 'Profile image must be square (same width and height)' 
+      });
+    }
+
+    // Check if dimensions are within allowed range
+    if (width < 300 || width > 1080) {
+      // Delete the uploaded file
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ 
+        message: 'Profile image dimensions must be between 300x300 and 1080x1080 pixels' 
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Image validation error:', error);
+    // Delete the uploaded file if it exists
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    return res.status(400).json({ 
+      message: 'Invalid image file. Please upload a valid image.' 
+    });
+  }
+};
 
 // @route   POST /api/auth/signup
 // @desc    Register a new user
@@ -193,7 +257,7 @@ router.get('/check-username', async (req, res) => {
 // @route   PUT /api/auth/profile
 // @desc    Update user profile
 // @access  Private
-router.put('/profile', protect, profileUpload.single('profileImage'), [
+router.put('/profile', protect, profileUpload.single('profileImage'), validateImageDimensions, [
   body('name')
     .optional()
     .trim()
@@ -237,12 +301,7 @@ router.put('/profile', protect, profileUpload.single('profileImage'), [
     // Handle profile image upload
     if (req.file) {
       // Delete old profile image if it exists
-      if (req.user.profileImage && req.user.profileImage.startsWith('/uploads/profiles/')) {
-        const oldImagePath = path.join(__dirname, '..', req.user.profileImage);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
-      }
+      deleteOldProfileImage(req.user.profileImage);
       
       updateData.profileImage = `/uploads/profiles/${req.file.filename}`;
     }
@@ -271,6 +330,35 @@ router.put('/profile', protect, profileUpload.single('profileImage'), [
   } catch (error) {
     console.error('Profile update error:', error);
     res.status(500).json({ message: 'Server error during profile update' });
+  }
+});
+
+// @route   DELETE /api/auth/profile-image
+// @desc    Delete user profile image
+// @access  Private
+router.delete('/profile-image', protect, async (req, res) => {
+  try {
+    // Delete old profile image if it exists
+    if (req.user.profileImage) {
+      deleteOldProfileImage(req.user.profileImage);
+    }
+
+    // Update user to remove profile image
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { profileImage: null },
+      { new: true, runValidators: true }
+    );
+
+    res.json({
+      success: true,
+      message: 'Profile image deleted successfully',
+      user: updatedUser.getUserInfo()
+    });
+
+  } catch (error) {
+    console.error('Profile image deletion error:', error);
+    res.status(500).json({ message: 'Server error during profile image deletion' });
   }
 });
 

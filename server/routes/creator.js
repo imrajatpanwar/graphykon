@@ -1,5 +1,8 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const sharp = require('sharp');
+const path = require('path');
+const fs = require('fs');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 
@@ -47,10 +50,69 @@ router.post('/be-a-creator', protect, [
 
     const { creatorName, username, phone, location, profileImage, bio } = req.body;
 
+    // Validate profile image if provided
+    if (profileImage) {
+      try {
+        // Remove data URL prefix to get base64 data
+        const base64Data = profileImage.replace(/^data:image\/[a-z]+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+        
+        // Get image metadata
+        const metadata = await sharp(buffer).metadata();
+        const { width, height } = metadata;
+
+        // Check if image is square
+        if (width !== height) {
+          return res.status(400).json({ 
+            message: 'Profile image must be square (same width and height)' 
+          });
+        }
+
+        // Check if dimensions are within allowed range
+        if (width < 300 || width > 1080) {
+          return res.status(400).json({ 
+            message: 'Profile image dimensions must be between 300x300 and 1080x1080 pixels' 
+          });
+        }
+
+        // Check file size (500KB limit)
+        if (buffer.length > 500 * 1024) {
+          return res.status(400).json({ 
+            message: 'Profile image must be less than 500KB' 
+          });
+        }
+      } catch (error) {
+        console.error('Image validation error:', error);
+        return res.status(400).json({ 
+          message: 'Invalid image file. Please upload a valid image.' 
+        });
+      }
+    }
+
     // Check if username is available
     const existingUser = await User.findOne({ username });
     if (existingUser && existingUser._id.toString() !== req.user._id.toString()) {
       return res.status(400).json({ message: 'Username is already taken' });
+    }
+
+    // Handle old profile image cleanup if new image is provided
+    if (profileImage && req.user.profileImage) {
+      try {
+        if (req.user.profileImage.startsWith('/uploads/profiles/')) {
+          // File stored in uploads directory
+          const oldImagePath = path.join(__dirname, '..', req.user.profileImage);
+          if (fs.existsSync(oldImagePath)) {
+            fs.unlinkSync(oldImagePath);
+            console.log('Deleted old profile image:', oldImagePath);
+          }
+        } else if (req.user.profileImage.startsWith('data:')) {
+          // Base64 data - no file to delete, but we can log it
+          console.log('Replacing base64 profile image with new base64 data');
+        }
+      } catch (error) {
+        console.error('Error deleting old profile image:', error);
+        // Continue with the update even if deletion fails
+      }
     }
 
     // Update user with creator information

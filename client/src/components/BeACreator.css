@@ -231,4 +231,11 @@
     padding: 0.625rem;
     font-size: 0.95rem;
   }
+}
+
+.image-requirements {
+  margin-top: 0.5rem;
+  color: #666;
+  font-size: 0.75rem;
+  display: block;
 } 
