@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 import './CreatorDashboard.css';
 
-// Utility function to get the correct image URL
+// Utility function to get the correct image URL for assets
 const getImageUrl = (filename) => {
   if (!filename) {
     console.warn('getImageUrl: No filename provided');
@@ -33,6 +33,42 @@ const getImageUrl = (filename) => {
   const timestamp = Date.now();
   const finalUrl = `https://graphykon.com/api/assets/image/${cleanFilename}?v=${timestamp}`;
   console.log('getImageUrl output:', finalUrl);
+  
+  return finalUrl;
+};
+
+// Utility function to get the correct profile image URL
+const getProfileImageUrl = (profileImagePath) => {
+  if (!profileImagePath) {
+    console.warn('getProfileImageUrl: No profile image path provided');
+    return null;
+  }
+  
+  console.log('getProfileImageUrl input:', profileImagePath);
+  
+  // If it's a data URL (base64), return as is
+  if (profileImagePath.startsWith('data:')) {
+    console.log('getProfileImageUrl: Data URL detected');
+    return profileImagePath;
+  }
+  
+  // If it's already a complete URL, return as is
+  if (profileImagePath.startsWith('http://') || profileImagePath.startsWith('https://')) {
+    console.log('getProfileImageUrl: Already complete URL:', profileImagePath);
+    return profileImagePath;
+  }
+  
+  // Extract filename from path like "/uploads/profiles/filename"
+  let filename = profileImagePath;
+  if (filename.includes('/')) {
+    filename = filename.split('/').pop();
+  }
+  
+  // Use the API endpoint for profile images with proper CORS headers
+  // Add cache-busting parameter to bypass Cloudflare cache
+  const timestamp = Date.now();
+  const finalUrl = `https://graphykon.com/api/assets/image/${filename}?v=${timestamp}`;
+  console.log('getProfileImageUrl output:', finalUrl);
   
   return finalUrl;
 };
@@ -231,16 +267,23 @@ const CreatorDashboard = () => {
           <div className="avatar">
             {user.profileImage ? (
               <img 
-                src={user.profileImage.startsWith('data:') ? user.profileImage : `https://graphykon.com${user.profileImage}`} 
-                alt="Profile" 
+                src={getProfileImageUrl(user.profileImage)} 
+                alt="Profile"
+                onError={(e) => {
+                  console.error('Profile image failed to load:', e.target.src);
+                  e.target.style.display = 'none';
+                  e.target.nextElementSibling.style.display = 'flex';
+                }}
+                onLoad={() => {
+                  console.log('✓ Profile image loaded successfully');
+                }}
               />
-            ) : (
-              <div className="avatar-placeholder">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-              </div>
-            )}
+            ) : null}
+            <div className="avatar-placeholder" style={{display: user.profileImage ? 'none' : 'flex'}}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </div>
           </div>
           <h2 className="studio-title">Your Studio</h2>
           <p className="user-name">{user.name}</p>
@@ -1380,17 +1423,24 @@ const UserSettings = () => {
             <div className="profile-image-container">
               {(profileImage ? URL.createObjectURL(profileImage) : user?.profileImage) ? (
                 <img 
-                  src={profileImage ? URL.createObjectURL(profileImage) : (user?.profileImage?.startsWith('data:') ? user.profileImage : `https://graphykon.com${user.profileImage}`)} 
+                  src={profileImage ? URL.createObjectURL(profileImage) : getProfileImageUrl(user.profileImage)} 
                   alt="Profile" 
                   className="profile-image"
+                  onError={(e) => {
+                    console.error('Settings profile image failed to load:', e.target.src);
+                    e.target.style.display = 'none';
+                    e.target.nextElementSibling.style.display = 'flex';
+                  }}
+                  onLoad={() => {
+                    console.log('✓ Settings profile image loaded successfully');
+                  }}
                 />
-              ) : (
-                <div className="profile-image-placeholder">
-                  <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                  </svg>
-                </div>
-              )}
+              ) : null}
+              <div className="profile-image-placeholder" style={{display: (profileImage || user?.profileImage) ? 'none' : 'flex'}}>
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
               {isEditing && (
                 <div className="image-upload-overlay">
                   <label htmlFor="profileImageUpload" className="upload-label">

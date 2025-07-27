@@ -439,15 +439,27 @@ router.get('/download/:id', protect, async (req, res) => {
 });
 
 // @route   GET /api/assets/image/:filename
-// @desc    Serve image files with proper CORS headers
+// @desc    Serve image files with proper CORS headers (assets and profile images)
 // @access  Public
 router.get('/image/:filename', (req, res) => {
   try {
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, '../uploads', filename);
     
-    // Check if file exists
+    // Try asset images first
+    let filePath = path.join(__dirname, '../uploads', filename);
+    
+    // If not found in uploads, try profiles directory
     if (!fs.existsSync(filePath)) {
+      filePath = path.join(__dirname, '../uploads/profiles', filename);
+    }
+    
+    // Check if file exists in either location
+    if (!fs.existsSync(filePath)) {
+      console.log('Image not found:', filename);
+      console.log('Tried paths:', [
+        path.join(__dirname, '../uploads', filename),
+        path.join(__dirname, '../uploads/profiles', filename)
+      ]);
       return res.status(404).json({ message: 'Image not found' });
     }
     
@@ -468,6 +480,8 @@ router.get('/image/:filename', (req, res) => {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year
     res.setHeader('Expires', new Date(Date.now() + 31536000000).toUTCString());
+    
+    console.log('Serving image:', filename, 'from:', filePath);
     
     // Send file
     res.sendFile(filePath);
