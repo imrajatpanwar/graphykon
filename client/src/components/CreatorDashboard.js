@@ -278,30 +278,7 @@ const CreatorDashboard = () => {
                 )}
               </div>
 
-              {/* Quick Actions */}
-              <div className="card quick-actions-card">
-                <h3>⚡ Quick Actions</h3>
-                <div className="quick-actions">
-                  <button 
-                    className="action-btn primary"
-                    onClick={() => setActiveTab('assets')}
-                  >
-                    📤 Upload New Asset
-                  </button>
-                  <button 
-                    className="action-btn secondary"
-                    onClick={() => setActiveTab('analytics')}
-                  >
-                    📊 View Detailed Analytics
-                  </button>
-                  <button 
-                    className="action-btn secondary"
-                    onClick={() => setActiveTab('setting')}
-                  >
-                    ⚙️ Studio Settings
-                  </button>
-                </div>
-              </div>
+
             </div>
           </div>
         );
