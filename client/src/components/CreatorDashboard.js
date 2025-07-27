@@ -6,18 +6,32 @@ import './CreatorDashboard.css';
 
 // Utility function to get the correct image URL
 const getImageUrl = (filename) => {
-  if (!filename) return null;
+  if (!filename) {
+    console.warn('getImageUrl: No filename provided');
+    return null;
+  }
+  
+  console.log('getImageUrl input:', filename);
   
   // If it's already a complete URL, return as is
   if (filename.startsWith('http://') || filename.startsWith('https://')) {
+    console.log('getImageUrl: Already complete URL:', filename);
     return filename;
   }
   
   // Remove any leading slashes from filename
-  const cleanFilename = filename.replace(/^\/+/, '');
+  let cleanFilename = filename.replace(/^\/+/, '');
   
-  // The server serves static files at /uploads/, so construct the URL accordingly
-  return `https://graphykon.com/uploads/${cleanFilename}`;
+  // Remove any path prefix that might be stored in the database
+  // The filename might be stored as full path like "/var/www/graphykon/server/uploads/filename"
+  if (cleanFilename.includes('/')) {
+    cleanFilename = cleanFilename.split('/').pop();
+  }
+  
+  const finalUrl = `https://graphykon.com/uploads/${cleanFilename}`;
+  console.log('getImageUrl output:', finalUrl);
+  
+  return finalUrl;
 };
 
 const CreatorDashboard = () => {
@@ -861,7 +875,19 @@ const Assets = () => {
                           console.error('=== IMAGE LOAD ERROR ===');
                           console.error('Failed URL:', e.target.src);
                           console.error('Asset coverImages[0]:', asset.coverImages[0]);
-                          console.error('Filename:', asset.coverImages[0].filename);
+                          console.error('Original filename:', asset.coverImages[0].filename);
+                          console.error('Asset ID:', asset.id);
+                          
+                          // Test if it's a network issue by trying to fetch manually
+                          fetch(e.target.src, { method: 'HEAD' })
+                            .then(response => {
+                              console.error('Manual fetch status:', response.status);
+                              console.error('Response headers:', [...response.headers.entries()]);
+                            })
+                            .catch(fetchError => {
+                              console.error('Manual fetch failed:', fetchError);
+                            });
+                          
                           console.error('========================');
                           
                           // Show placeholder
@@ -869,7 +895,7 @@ const Assets = () => {
                           e.target.nextElementSibling.style.display = 'block';
                         }} 
                         onLoad={() => {
-                          console.log('✓ Image loaded successfully:', asset.title);
+                          console.log('✓ Image loaded successfully:', asset.title, 'URL:', getImageUrl(asset.coverImages[0].filename));
                         }}
                         style={{maxWidth: '100%', height: 'auto'}}
                       />
