@@ -67,42 +67,92 @@ const processProfileImage = async (req, res, next) => {
   }
 
   try {
+    console.log('Starting image processing for:', req.file.originalname);
     const inputPath = req.file.path;
     const outputPath = inputPath.replace(/\.[^/.]+$/, '_processed.jpg');
     
+    // Check if input file exists
+    if (!fs.existsSync(inputPath)) {
+      throw new Error('Input file does not exist');
+    }
+
     // Get original image metadata
+    console.log('Getting image metadata...');
     const metadata = await sharp(inputPath).metadata();
-    const { width, height } = metadata;
+    const { width, height, format } = metadata;
+    
+    console.log(`Original image: ${width}x${height}, format: ${format}`);
+
+    // Validate dimensions
+    if (width < 10 || height < 10) {
+      throw new Error('Image too small to process');
+    }
 
     // Calculate crop dimensions for square format
     const size = Math.min(width, height);
     const left = Math.floor((width - size) / 2);
     const top = Math.floor((height - size) / 2);
 
+    console.log(`Cropping to square: ${size}x${size} from position (${left}, ${top})`);
+
     // Process image: crop to square, resize to 512x512, compress
-    await sharp(inputPath)
-      .crop(size, size, left, top) // Crop to square
-      .resize(512, 512) // Resize to 512x512
-      .jpeg({ 
-        quality: 80, // Compress with 80% quality
-        progressive: true 
-      })
-      .toFile(outputPath);
+    // Try with different approaches if the first one fails
+    try {
+      await sharp(inputPath)
+        .crop(size, size, left, top) // Crop to square
+        .resize(512, 512) // Resize to 512x512
+        .jpeg({ 
+          quality: 80, // Compress with 80% quality
+          progressive: true 
+        })
+        .toFile(outputPath);
+    } catch (processingError) {
+      console.log('First processing attempt failed, trying alternative approach...');
+      
+      // Fallback: try without progressive JPEG
+      await sharp(inputPath)
+        .crop(size, size, left, top) // Crop to square
+        .resize(512, 512) // Resize to 512x512
+        .jpeg({ 
+          quality: 80 // Compress with 80% quality
+        })
+        .toFile(outputPath);
+    }
+
+    // Verify output file was created
+    if (!fs.existsSync(outputPath)) {
+      throw new Error('Processed file was not created');
+    }
 
     // Replace original file with processed one
     fs.unlinkSync(inputPath);
     fs.renameSync(outputPath, inputPath);
 
-    console.log('Profile image processed: cropped to square, resized to 512x512, compressed');
+    console.log('Profile image processed successfully: cropped to square, resized to 512x512, compressed');
     next();
   } catch (error) {
-    console.error('Image processing error:', error);
-    // Delete the uploaded file if it exists
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+    console.error('Image processing error details:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Clean up files
+    try {
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+        console.log('Cleaned up input file');
+      }
+      
+      const outputPath = req.file.path.replace(/\.[^/.]+$/, '_processed.jpg');
+      if (fs.existsSync(outputPath)) {
+        fs.unlinkSync(outputPath);
+        console.log('Cleaned up output file');
+      }
+    } catch (cleanupError) {
+      console.error('Error during cleanup:', cleanupError);
     }
+    
     return res.status(400).json({ 
-      message: 'Error processing image. Please try again with a valid image file.' 
+      message: 'Error processing image. Please try again with a valid image file.',
+      details: error.message
     });
   }
 };

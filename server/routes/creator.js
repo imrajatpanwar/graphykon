@@ -53,28 +53,60 @@ router.post('/be-a-creator', protect, [
     // Process profile image if provided
     if (profileImage) {
       try {
+        console.log('Processing base64 profile image...');
+        
         // Remove data URL prefix to get base64 data
         const base64Data = profileImage.replace(/^data:image\/[a-z]+;base64,/, '');
         const buffer = Buffer.from(base64Data, 'base64');
         
+        // Validate buffer
+        if (buffer.length === 0) {
+          throw new Error('Empty image data');
+        }
+        
         // Get image metadata
+        console.log('Getting base64 image metadata...');
         const metadata = await sharp(buffer).metadata();
-        const { width, height } = metadata;
+        const { width, height, format } = metadata;
+        
+        console.log(`Original base64 image: ${width}x${height}, format: ${format}`);
+
+        // Validate dimensions
+        if (width < 10 || height < 10) {
+          throw new Error('Image too small to process');
+        }
 
         // Calculate crop dimensions for square format
         const size = Math.min(width, height);
         const left = Math.floor((width - size) / 2);
         const top = Math.floor((height - size) / 2);
 
+        console.log(`Cropping base64 image to square: ${size}x${size} from position (${left}, ${top})`);
+
         // Process image: crop to square, resize to 512x512, compress
-        const processedBuffer = await sharp(buffer)
-          .crop(size, size, left, top) // Crop to square
-          .resize(512, 512) // Resize to 512x512
-          .jpeg({ 
-            quality: 80, // Compress with 80% quality
-            progressive: true 
-          })
-          .toBuffer();
+        // Try with different approaches if the first one fails
+        let processedBuffer;
+        try {
+          processedBuffer = await sharp(buffer)
+            .crop(size, size, left, top) // Crop to square
+            .resize(512, 512) // Resize to 512x512
+            .jpeg({ 
+              quality: 80, // Compress with 80% quality
+              progressive: true 
+            })
+            .toBuffer();
+        } catch (processingError) {
+          console.log('First base64 processing attempt failed, trying alternative approach...');
+          
+          // Fallback: try without progressive JPEG
+          processedBuffer = await sharp(buffer)
+            .crop(size, size, left, top) // Crop to square
+            .resize(512, 512) // Resize to 512x512
+            .jpeg({ 
+              quality: 80 // Compress with 80% quality
+            })
+            .toBuffer();
+        }
 
         // Convert back to base64
         const processedBase64 = `data:image/jpeg;base64,${processedBuffer.toString('base64')}`;
@@ -82,11 +114,13 @@ router.post('/be-a-creator', protect, [
         // Update the profileImage with processed version
         req.body.profileImage = processedBase64;
 
-        console.log('Profile image processed: cropped to square, resized to 512x512, compressed');
+        console.log('Base64 profile image processed successfully: cropped to square, resized to 512x512, compressed');
       } catch (error) {
-        console.error('Image processing error:', error);
+        console.error('Base64 image processing error details:', error);
+        console.error('Error stack:', error.stack);
         return res.status(400).json({ 
-          message: 'Error processing image. Please try again with a valid image file.' 
+          message: 'Error processing image. Please try again with a valid image file.',
+          details: error.message
         });
       }
     }
