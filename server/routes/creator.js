@@ -88,7 +88,7 @@ router.post('/be-a-creator', protect, [
         let processedBuffer;
         try {
           processedBuffer = await sharp(buffer)
-            .crop(size, size, left, top) // Crop to square
+            .extract({ left, top, width: size, height: size }) // Crop to square (older Sharp version)
             .resize(512, 512) // Resize to 512x512
             .jpeg({ 
               quality: 80, // Compress with 80% quality
@@ -100,7 +100,7 @@ router.post('/be-a-creator', protect, [
           
           // Fallback: try without progressive JPEG
           processedBuffer = await sharp(buffer)
-            .crop(size, size, left, top) // Crop to square
+            .extract({ left, top, width: size, height: size }) // Crop to square (older Sharp version)
             .resize(512, 512) // Resize to 512x512
             .jpeg({ 
               quality: 80 // Compress with 80% quality

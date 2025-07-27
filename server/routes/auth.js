@@ -99,7 +99,7 @@ const processProfileImage = async (req, res, next) => {
     // Try with different approaches if the first one fails
     try {
       await sharp(inputPath)
-        .crop(size, size, left, top) // Crop to square
+        .extract({ left, top, width: size, height: size }) // Crop to square (older Sharp version)
         .resize(512, 512) // Resize to 512x512
         .jpeg({ 
           quality: 80, // Compress with 80% quality
@@ -111,7 +111,7 @@ const processProfileImage = async (req, res, next) => {
       
       // Fallback: try without progressive JPEG
       await sharp(inputPath)
-        .crop(size, size, left, top) // Crop to square
+        .extract({ left, top, width: size, height: size }) // Crop to square (older Sharp version)
         .resize(512, 512) // Resize to 512x512
         .jpeg({ 
           quality: 80 // Compress with 80% quality
