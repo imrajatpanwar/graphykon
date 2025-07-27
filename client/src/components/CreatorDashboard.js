@@ -1328,12 +1328,29 @@ const UserSettings = () => {
       // Create FormData for file upload
       const formDataToSend = new FormData();
       
-      // Add text fields
-      Object.keys(profileData).forEach(key => {
-        if (profileData[key]) {
-          formDataToSend.append(key, profileData[key]);
-          console.log(`Added field ${key}:`, profileData[key]);
-        }
+      // Add text fields - always send required fields, only send optional fields if they have values
+      formDataToSend.append('name', profileData.name || '');
+      formDataToSend.append('username', profileData.username || '');
+      formDataToSend.append('email', profileData.email || '');
+      
+      // Add optional fields only if they have values
+      if (profileData.phone) {
+        formDataToSend.append('phone', profileData.phone);
+      }
+      if (profileData.location) {
+        formDataToSend.append('location', profileData.location);
+      }
+      if (profileData.bio) {
+        formDataToSend.append('bio', profileData.bio);
+      }
+      
+      console.log('Form data being sent:', {
+        name: profileData.name || '',
+        username: profileData.username || '',
+        email: profileData.email || '',
+        phone: profileData.phone || '',
+        location: profileData.location || '',
+        bio: profileData.bio || ''
       });
       
       // Add profile image if selected
