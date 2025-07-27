@@ -36,8 +36,33 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploaded files with proper headers
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, filePath) => {
+    // Set proper Content-Type for images
+    if (filePath.match(/\.(jpg|jpeg|png|gif|svg|webp)$/i)) {
+      const ext = path.extname(filePath).toLowerCase();
+      const mimeTypes = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml',
+        '.webp': 'image/webp'
+      };
+      res.setHeader('Content-Type', mimeTypes[ext] || 'image/jpeg');
+    }
+    
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // Set cache headers
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year
+    res.setHeader('Expires', new Date(Date.now() + 31536000000).toUTCString());
+  }
+}));
 
 // Routes
 app.use('/api/auth', authRoutes);

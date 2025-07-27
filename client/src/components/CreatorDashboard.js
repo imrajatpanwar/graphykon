@@ -28,7 +28,9 @@ const getImageUrl = (filename) => {
     cleanFilename = cleanFilename.split('/').pop();
   }
   
-  const finalUrl = `https://graphykon.com/uploads/${cleanFilename}`;
+  // Add cache-busting parameter to bypass Cloudflare cache
+  const timestamp = Date.now();
+  const finalUrl = `https://graphykon.com/uploads/${cleanFilename}?v=${timestamp}`;
   console.log('getImageUrl output:', finalUrl);
   
   return finalUrl;
