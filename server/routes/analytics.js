@@ -409,6 +409,170 @@ router.get('/category-breakdown', protect, async (req, res) => {
   }
 });
 
+// @route   GET /api/analytics/dashboard-realtime
+// @desc    Get real-time dashboard data for a creator
+// @access  Private
+router.get('/dashboard-realtime', protect, async (req, res) => {
+  try {
+    const now = new Date();
+    const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // Get total assets
+    const totalAssets = await Asset.countDocuments({ creator: req.user._id });
+    
+    // Get assets created in last 30 days
+    const recentAssets = await Asset.countDocuments({ 
+      creator: req.user._id,
+      createdAt: { $gte: last30Days }
+    });
+
+    // Get analytics data for different time periods
+    const [totalViews, last7DaysViews, last24HoursViews] = await Promise.all([
+      Analytics.countDocuments({ 
+        creator: req.user._id, 
+        type: 'view' 
+      }),
+      Analytics.countDocuments({ 
+        creator: req.user._id, 
+        type: 'view',
+        createdAt: { $gte: last7Days }
+      }),
+      Analytics.countDocuments({ 
+        creator: req.user._id, 
+        type: 'view',
+        createdAt: { $gte: last24Hours }
+      })
+    ]);
+
+    const [totalDownloads, last7DaysDownloads, last24HoursDownloads] = await Promise.all([
+      Analytics.countDocuments({ 
+        creator: req.user._id, 
+        type: 'download' 
+      }),
+      Analytics.countDocuments({ 
+        creator: req.user._id, 
+        type: 'download',
+        createdAt: { $gte: last7Days }
+      }),
+      Analytics.countDocuments({ 
+        creator: req.user._id, 
+        type: 'download',
+        createdAt: { $gte: last24Hours }
+      })
+    ]);
+
+    // Get top performing assets
+    const topAssets = await Analytics.aggregate([
+      {
+        $match: {
+          creator: req.user._id,
+          type: { $in: ['view', 'download'] },
+          createdAt: { $gte: last30Days }
+        }
+      },
+      {
+        $group: {
+          _id: '$asset',
+          views: {
+            $sum: { $cond: [{ $eq: ['$type', 'view'] }, 1, 0] }
+          },
+          downloads: {
+            $sum: { $cond: [{ $eq: ['$type', 'download'] }, 1, 0] }
+          }
+        }
+      },
+      {
+        $sort: { views: -1 }
+      },
+      {
+        $limit: 5
+      },
+      {
+        $lookup: {
+          from: 'assets',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'assetInfo'
+        }
+      },
+      {
+        $unwind: '$assetInfo'
+      }
+    ]);
+
+    // Calculate growth percentages
+    const previous30Days = new Date(last30Days.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const previousViews = await Analytics.countDocuments({ 
+      creator: req.user._id, 
+      type: 'view',
+      createdAt: { $gte: previous30Days, $lt: last30Days }
+    });
+
+    const viewsGrowth = previousViews > 0 ? ((totalViews - previousViews) / previousViews * 100).toFixed(1) : 0;
+
+    // Get monthly data for chart
+    const monthlyData = await Analytics.aggregate([
+      {
+        $match: {
+          creator: req.user._id,
+          type: { $in: ['view', 'download'] },
+          createdAt: { $gte: new Date(now.getFullYear(), 0, 1) } // This year
+        }
+      },
+      {
+        $group: {
+          _id: {
+            month: { $month: '$createdAt' },
+            type: '$type'
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $group: {
+          _id: '$_id.month',
+          views: {
+            $sum: { $cond: [{ $eq: ['$_id.type', 'view'] }, '$count', 0] }
+          },
+          downloads: {
+            $sum: { $cond: [{ $eq: ['$_id.type', 'download'] }, '$count', 0] }
+          }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    res.json({
+      totalAssets,
+      recentAssets,
+      totalViews,
+      last7DaysViews,
+      last24HoursViews,
+      totalDownloads,
+      last7DaysDownloads,
+      last24HoursDownloads,
+      viewsGrowth: parseFloat(viewsGrowth),
+      topAssets: topAssets.map(asset => ({
+        id: asset._id,
+        title: asset.assetInfo.title,
+        views: asset.views,
+        downloads: asset.downloads,
+        totalEngagement: asset.views + asset.downloads
+      })),
+      monthlyData,
+      lastUpdated: now
+    });
+
+  } catch (error) {
+    console.error('Dashboard realtime error:', error);
+    res.status(500).json({ message: 'Server error during dashboard data fetch' });
+  }
+});
+
 // @route   GET /api/analytics/recent-activity
 // @desc    Get recent activity
 // @access  Private

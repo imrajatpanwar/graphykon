@@ -78,14 +78,21 @@ const CreatorDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [dashboardData, setDashboardData] = useState({
-    followers: 0,
-    totalUploads: 0,
-    assetViews: 0,
-    downloads: 0,
-    earnings: 0,
-    copyrights: 0,
+    totalAssets: 0,
+    recentAssets: 0,
+    totalViews: 0,
+    last7DaysViews: 0,
+    last24HoursViews: 0,
+    totalDownloads: 0,
+    last7DaysDownloads: 0,
+    last24HoursDownloads: 0,
+    viewsGrowth: 0,
+    topAssets: [],
+    monthlyData: [],
     lastUpdated: new Date()
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
 
   // Redirect if not a creator
   React.useEffect(() => {
@@ -94,24 +101,31 @@ const CreatorDashboard = () => {
     }
   }, [user, navigate]);
 
-  // Data fetching
+  // Data fetching with auto-refresh
   React.useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch dashboard data
+        setIsLoading(true);
         const response = await api.get('/analytics/dashboard-realtime');
         setDashboardData({
           ...response.data,
           lastUpdated: new Date()
         });
+        setLastRefresh(new Date());
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        // Don't show dummy data - keep existing data or show empty state
+      } finally {
+        setIsLoading(false);
       }
     };
 
     // Initial fetch
     fetchDashboardData();
+
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchDashboardData, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   if (!user || !user.creator) {
@@ -134,123 +148,159 @@ const CreatorDashboard = () => {
         return (
           <div className="main-content">
             <div className="content-header">
-              <h1>Studio Dashboard</h1>
+              <div className="header-content">
+                <h1>Studio Dashboard</h1>
+                <div className="header-actions">
+                  <span className="last-updated">
+                    Last updated: {lastRefresh.toLocaleTimeString()}
+                  </span>
+                  <button 
+                    className="refresh-btn"
+                    onClick={() => {
+                      const fetchDashboardData = async () => {
+                        try {
+                          setIsLoading(true);
+                          const response = await api.get('/analytics/dashboard-realtime');
+                          setDashboardData({
+                            ...response.data,
+                            lastUpdated: new Date()
+                          });
+                          setLastRefresh(new Date());
+                        } catch (error) {
+                          console.error('Error fetching dashboard data:', error);
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      };
+                      fetchDashboardData();
+                    }}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? '🔄' : '🔄'} Refresh
+                  </button>
+                </div>
+              </div>
             </div>
 
+            {isLoading && (
+              <div className="loading-overlay">
+                <div className="loading-spinner">🔄</div>
+                <p>Loading dashboard data...</p>
+              </div>
+            )}
+
             <div className="dashboard-grid">
-              {/* Studio Analytics Card */}
-              <div className="card analytics-card">
-                <h3>Studio Analytics</h3>
-                <div className="metric">
-                  <span className="metric-label">Current Followers</span>
-                  <span className="metric-value">
-                    {dashboardData.followers > 0 ? dashboardData.followers : 'No data'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Overall Growth Card */}
-              <div className="card growth-card">
-                <h3>Overall Growth</h3>
-                <div className="chart-container">
-                  <svg width="100%" height="140" viewBox="0 0 400 140">
-                    {/* Grid lines */}
-                    <defs>
-                      <pattern id="grid" width="40" height="20" patternUnits="userSpaceOnUse">
-                        <path d="M 40 0 L 0 0 0 20" fill="none" stroke="#f0f0f0" strokeWidth="1"/>
-                      </pattern>
-                    </defs>
-                    
-                    {/* Background grid */}
-                    <rect width="100%" height="100%" fill="url(#grid)" />
-                    
-                    {/* Month labels */}
-                    <text x="20" y="130" textAnchor="middle" fontSize="10" fill="#666">Jan</text>
-                    <text x="53" y="130" textAnchor="middle" fontSize="10" fill="#666">Feb</text>
-                    <text x="86" y="130" textAnchor="middle" fontSize="10" fill="#666">Mar</text>
-                    <text x="119" y="130" textAnchor="middle" fontSize="10" fill="#666">Apr</text>
-                    <text x="152" y="130" textAnchor="middle" fontSize="10" fill="#666">May</text>
-                    <text x="185" y="130" textAnchor="middle" fontSize="10" fill="#666">Jun</text>
-                    <text x="218" y="130" textAnchor="middle" fontSize="10" fill="#666">Jul</text>
-                    <text x="251" y="130" textAnchor="middle" fontSize="10" fill="#666">Aug</text>
-                    <text x="284" y="130" textAnchor="middle" fontSize="10" fill="#666">Sep</text>
-                    <text x="317" y="130" textAnchor="middle" fontSize="10" fill="#666">Oct</text>
-                    <text x="350" y="130" textAnchor="middle" fontSize="10" fill="#666">Nov</text>
-                    <text x="383" y="130" textAnchor="middle" fontSize="10" fill="#666">Dec</text>
-                    
-                    {/* Growth line with hill and valley pattern */}
-                    <path 
-                      d="M20,100 L53,80 L86,60 L119,40 L152,25 L185,15 L218,10 L251,25 L284,50 L317,80 L350,60 L383,35" 
-                      stroke="#007bff" 
-                      strokeWidth="3" 
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    
-                    {/* Gradient fill under the line */}
-                    <path 
-                      d="M20,100 L53,80 L86,60 L119,40 L152,25 L185,15 L218,10 L251,25 L284,50 L317,80 L350,60 L383,35 L383,120 L20,120 Z" 
-                      fill="url(#areaGradient)" 
-                      opacity="0.1"
-                    />
-                    
-                    {/* Gradient definition */}
-                    <defs>
-                      <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#007bff" stopOpacity="0.3"/>
-                        <stop offset="100%" stopColor="#007bff" stopOpacity="0"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-              </div>
-
-              {/* Summary Card */}
-              <div className="card summary-card">
-                <h3>Summary</h3>
-                <p className="summary-subtitle">Last 28 days</p>
-                <div className="summary-metrics">
-                  <div className="summary-item">
-                    <span className="summary-label">Total Uploads</span>
-                    <span className="summary-value">
-                      {dashboardData.totalUploads > 0 ? dashboardData.totalUploads : 'No data'}
-                    </span>
+              {/* Overview Stats */}
+              <div className="card overview-card">
+                <h3>📊 Overview</h3>
+                <div className="overview-stats">
+                  <div className="stat-item">
+                    <div className="stat-icon">📁</div>
+                    <div className="stat-content">
+                      <span className="stat-value">{dashboardData.totalAssets}</span>
+                      <span className="stat-label">Total Assets</span>
+                    </div>
                   </div>
-                  <div className="summary-item">
-                    <span className="summary-label">Asset Views</span>
-                    <span className="summary-value">
-                      {dashboardData.assetViews > 0 ? dashboardData.assetViews.toLocaleString() : 'No data'}
-                    </span>
+                  <div className="stat-item">
+                    <div className="stat-icon">📈</div>
+                    <div className="stat-content">
+                      <span className="stat-value">{dashboardData.totalViews.toLocaleString()}</span>
+                      <span className="stat-label">Total Views</span>
+                    </div>
                   </div>
-                  <div className="summary-item">
-                    <span className="summary-label">Downloads</span>
-                    <span className="summary-value">
-                      {dashboardData.downloads > 0 ? dashboardData.downloads : 'No data'}
-                    </span>
+                  <div className="stat-item">
+                    <div className="stat-icon">⬇️</div>
+                    <div className="stat-content">
+                      <span className="stat-value">{dashboardData.totalDownloads.toLocaleString()}</span>
+                      <span className="stat-label">Total Downloads</span>
+                    </div>
                   </div>
-                  <div className="summary-item">
-                    <span className="summary-label">Earnings</span>
-                    <span className="summary-value">
-                      {dashboardData.earnings > 0 ? `$${dashboardData.earnings}` : 'No data'}
-                    </span>
-                  </div>
-                  <div className="summary-item">
-                    <span className="summary-label">Copyright's</span>
-                    <span className="summary-value">
-                      {dashboardData.copyrights > 0 ? dashboardData.copyrights : 'No data'}
-                    </span>
+                  <div className="stat-item">
+                    <div className="stat-icon">📊</div>
+                    <div className="stat-content">
+                      <span className="stat-value">{dashboardData.viewsGrowth > 0 ? '+' : ''}{dashboardData.viewsGrowth}%</span>
+                      <span className="stat-label">Growth (30d)</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Call to Action Card */}
-              <div className="card cta-card">
-                <h3>Get Started</h3>
-                <p>Want to see metrics on your recent Assets? Upload and Publish a New Asset to get Started.</p>
-                <button className="upload-btn" onClick={() => setActiveTab('assets')}>
-                  Upload Assets
-                </button>
+              {/* Recent Activity */}
+              <div className="card recent-activity-card">
+                <h3>📅 Recent Activity (Last 30 Days)</h3>
+                <div className="recent-stats">
+                  <div className="recent-stat">
+                    <span className="recent-label">New Assets</span>
+                    <span className="recent-value">{dashboardData.recentAssets}</span>
+                  </div>
+                  <div className="recent-stat">
+                    <span className="recent-label">Views (7d)</span>
+                    <span className="recent-value">{dashboardData.last7DaysViews.toLocaleString()}</span>
+                  </div>
+                  <div className="recent-stat">
+                    <span className="recent-label">Views (24h)</span>
+                    <span className="recent-value">{dashboardData.last24HoursViews.toLocaleString()}</span>
+                  </div>
+                  <div className="recent-stat">
+                    <span className="recent-label">Downloads (7d)</span>
+                    <span className="recent-value">{dashboardData.last7DaysDownloads.toLocaleString()}</span>
+                  </div>
+                  <div className="recent-stat">
+                    <span className="recent-label">Downloads (24h)</span>
+                    <span className="recent-value">{dashboardData.last24HoursDownloads.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Top Performing Assets */}
+              <div className="card top-assets-card">
+                <h3>🏆 Top Performing Assets</h3>
+                {dashboardData.topAssets.length > 0 ? (
+                  <div className="top-assets-list">
+                    {dashboardData.topAssets.map((asset, index) => (
+                      <div key={asset.id} className="top-asset-item">
+                        <div className="asset-rank">#{index + 1}</div>
+                        <div className="asset-info">
+                          <div className="asset-title">{asset.title}</div>
+                          <div className="asset-stats">
+                            <span className="asset-stat">👁️ {asset.views.toLocaleString()}</span>
+                            <span className="asset-stat">⬇️ {asset.downloads.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="no-data">
+                    <p>No assets with analytics data yet</p>
+                    <p>Upload your first asset to start tracking performance!</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Actions */}
+              <div className="card quick-actions-card">
+                <h3>⚡ Quick Actions</h3>
+                <div className="quick-actions">
+                  <button 
+                    className="action-btn primary"
+                    onClick={() => setActiveTab('assets')}
+                  >
+                    📤 Upload New Asset
+                  </button>
+                  <button 
+                    className="action-btn secondary"
+                    onClick={() => setActiveTab('analytics')}
+                  >
+                    📊 View Detailed Analytics
+                  </button>
+                  <button 
+                    className="action-btn secondary"
+                    onClick={() => setActiveTab('setting')}
+                  >
+                    ⚙️ Studio Settings
+                  </button>
+                </div>
               </div>
             </div>
           </div>
