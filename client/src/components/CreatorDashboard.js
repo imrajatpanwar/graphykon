@@ -1486,9 +1486,7 @@ const UserSettings = () => {
                       </svg>
                       Change Photo
                     </label>
-                    <div className="image-requirements">
-                      <small>Any image will be automatically cropped to square and optimized</small>
-                    </div>
+
                     <input
                       type="file"
                       id="profileImageUpload"

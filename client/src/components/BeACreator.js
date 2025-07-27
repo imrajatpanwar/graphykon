@@ -275,7 +275,7 @@ const BeACreator = () => {
               onChange={handleImageChange}
               className="file-input"
             />
-            <small className="image-requirements">Any image will be automatically cropped to square and optimized</small>
+
             {imagePreview && (
               <div className="image-preview">
                 <img src={imagePreview} alt="Profile preview" />
