@@ -28,9 +28,10 @@ const getImageUrl = (filename) => {
     cleanFilename = cleanFilename.split('/').pop();
   }
   
+  // Use the API endpoint for images which has proper CORS headers
   // Add cache-busting parameter to bypass Cloudflare cache
   const timestamp = Date.now();
-  const finalUrl = `https://graphykon.com/uploads/${cleanFilename}?v=${timestamp}`;
+  const finalUrl = `https://graphykon.com/api/assets/image/${cleanFilename}?v=${timestamp}`;
   console.log('getImageUrl output:', finalUrl);
   
   return finalUrl;

@@ -438,4 +438,44 @@ router.get('/download/:id', protect, async (req, res) => {
   }
 });
 
+// @route   GET /api/assets/image/:filename
+// @desc    Serve image files with proper CORS headers
+// @access  Public
+router.get('/image/:filename', (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, '../uploads', filename);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Image not found' });
+    }
+    
+    // Set proper headers
+    const ext = path.extname(filename).toLowerCase();
+    const mimeTypes = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.webp': 'image/webp'
+    };
+    
+    res.setHeader('Content-Type', mimeTypes[ext] || 'image/jpeg');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year
+    res.setHeader('Expires', new Date(Date.now() + 31536000000).toUTCString());
+    
+    // Send file
+    res.sendFile(filePath);
+    
+  } catch (error) {
+    console.error('Image serve error:', error);
+    res.status(500).json({ message: 'Server error while serving image' });
+  }
+});
+
 module.exports = router; 
