@@ -1297,10 +1297,10 @@ const UserSettings = () => {
   const handleProfileImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Check file size (500KB limit)
-      const maxSize = 500 * 1024; // 500KB in bytes
+      // Check file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       if (file.size > maxSize) {
-        alert('Profile image must be less than 500KB');
+        alert('Profile image must be less than 5MB');
         e.target.value = '';
         return;
       }
@@ -1312,37 +1312,7 @@ const UserSettings = () => {
         return;
       }
       
-      // Check image dimensions
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        
-        // Check if image is square
-        if (img.width !== img.height) {
-          alert('Profile image must be square (same width and height)');
-          e.target.value = '';
-          return;
-        }
-        
-        // Check if dimensions are within allowed range
-        if (img.width < 300 || img.width > 1080) {
-          alert('Profile image dimensions must be between 300x300 and 1080x1080 pixels');
-          e.target.value = '';
-          return;
-        }
-        
-        setProfileImage(file);
-      };
-      
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        alert('Invalid image file. Please select a valid image.');
-        e.target.value = '';
-      };
-      
-      img.src = url;
+      setProfileImage(file);
     }
   };
 
@@ -1500,7 +1470,7 @@ const UserSettings = () => {
                       Change Photo
                     </label>
                     <div className="image-requirements">
-                      <small>Square image, 300x300 to 1080x1080px, max 500KB</small>
+                      <small>Any image will be automatically cropped to square and optimized</small>
                     </div>
                     <input
                       type="file"

@@ -50,7 +50,7 @@ router.post('/be-a-creator', protect, [
 
     const { creatorName, username, phone, location, profileImage, bio } = req.body;
 
-    // Validate profile image if provided
+    // Process profile image if provided
     if (profileImage) {
       try {
         // Remove data URL prefix to get base64 data
@@ -61,30 +61,32 @@ router.post('/be-a-creator', protect, [
         const metadata = await sharp(buffer).metadata();
         const { width, height } = metadata;
 
-        // Check if image is square
-        if (width !== height) {
-          return res.status(400).json({ 
-            message: 'Profile image must be square (same width and height)' 
-          });
-        }
+        // Calculate crop dimensions for square format
+        const size = Math.min(width, height);
+        const left = Math.floor((width - size) / 2);
+        const top = Math.floor((height - size) / 2);
 
-        // Check if dimensions are within allowed range
-        if (width < 300 || width > 1080) {
-          return res.status(400).json({ 
-            message: 'Profile image dimensions must be between 300x300 and 1080x1080 pixels' 
-          });
-        }
+        // Process image: crop to square, resize to 512x512, compress
+        const processedBuffer = await sharp(buffer)
+          .crop(size, size, left, top) // Crop to square
+          .resize(512, 512) // Resize to 512x512
+          .jpeg({ 
+            quality: 80, // Compress with 80% quality
+            progressive: true 
+          })
+          .toBuffer();
 
-        // Check file size (500KB limit)
-        if (buffer.length > 500 * 1024) {
-          return res.status(400).json({ 
-            message: 'Profile image must be less than 500KB' 
-          });
-        }
+        // Convert back to base64
+        const processedBase64 = `data:image/jpeg;base64,${processedBuffer.toString('base64')}`;
+        
+        // Update the profileImage with processed version
+        req.body.profileImage = processedBase64;
+
+        console.log('Profile image processed: cropped to square, resized to 512x512, compressed');
       } catch (error) {
-        console.error('Image validation error:', error);
+        console.error('Image processing error:', error);
         return res.status(400).json({ 
-          message: 'Invalid image file. Please upload a valid image.' 
+          message: 'Error processing image. Please try again with a valid image file.' 
         });
       }
     }

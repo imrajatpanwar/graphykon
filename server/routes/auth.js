@@ -34,7 +34,7 @@ const profileUpload = multer({
     }
   },
   limits: {
-    fileSize: 500 * 1024 // 500KB limit
+    fileSize: 5 * 1024 * 1024 // 5MB limit (will be compressed)
   }
 });
 
@@ -60,43 +60,49 @@ const deleteOldProfileImage = (profileImagePath) => {
   }
 };
 
-// Middleware to validate image dimensions
-const validateImageDimensions = async (req, res, next) => {
+// Middleware to process and optimize profile images
+const processProfileImage = async (req, res, next) => {
   if (!req.file) {
     return next();
   }
 
   try {
-    const metadata = await sharp(req.file.path).metadata();
+    const inputPath = req.file.path;
+    const outputPath = inputPath.replace(/\.[^/.]+$/, '_processed.jpg');
+    
+    // Get original image metadata
+    const metadata = await sharp(inputPath).metadata();
     const { width, height } = metadata;
 
-    // Check if image is square
-    if (width !== height) {
-      // Delete the uploaded file
-      fs.unlinkSync(req.file.path);
-      return res.status(400).json({ 
-        message: 'Profile image must be square (same width and height)' 
-      });
-    }
+    // Calculate crop dimensions for square format
+    const size = Math.min(width, height);
+    const left = Math.floor((width - size) / 2);
+    const top = Math.floor((height - size) / 2);
 
-    // Check if dimensions are within allowed range
-    if (width < 300 || width > 1080) {
-      // Delete the uploaded file
-      fs.unlinkSync(req.file.path);
-      return res.status(400).json({ 
-        message: 'Profile image dimensions must be between 300x300 and 1080x1080 pixels' 
-      });
-    }
+    // Process image: crop to square, resize to 512x512, compress
+    await sharp(inputPath)
+      .crop(size, size, left, top) // Crop to square
+      .resize(512, 512) // Resize to 512x512
+      .jpeg({ 
+        quality: 80, // Compress with 80% quality
+        progressive: true 
+      })
+      .toFile(outputPath);
 
+    // Replace original file with processed one
+    fs.unlinkSync(inputPath);
+    fs.renameSync(outputPath, inputPath);
+
+    console.log('Profile image processed: cropped to square, resized to 512x512, compressed');
     next();
   } catch (error) {
-    console.error('Image validation error:', error);
+    console.error('Image processing error:', error);
     // Delete the uploaded file if it exists
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
     return res.status(400).json({ 
-      message: 'Invalid image file. Please upload a valid image.' 
+      message: 'Error processing image. Please try again with a valid image file.' 
     });
   }
 };
@@ -257,7 +263,7 @@ router.get('/check-username', async (req, res) => {
 // @route   PUT /api/auth/profile
 // @desc    Update user profile
 // @access  Private
-router.put('/profile', protect, profileUpload.single('profileImage'), validateImageDimensions, [
+router.put('/profile', protect, profileUpload.single('profileImage'), processProfileImage, [
   body('name')
     .optional()
     .trim()
