@@ -91,8 +91,7 @@ const CreatorDashboard = () => {
     monthlyData: [],
     lastUpdated: new Date()
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [lastRefresh, setLastRefresh] = useState(new Date());
+
 
   // Redirect if not a creator
   React.useEffect(() => {
@@ -101,31 +100,22 @@ const CreatorDashboard = () => {
     }
   }, [user, navigate]);
 
-  // Data fetching with auto-refresh
+  // Data fetching
   React.useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        setIsLoading(true);
         const response = await api.get('/analytics/dashboard-realtime');
         setDashboardData({
           ...response.data,
           lastUpdated: new Date()
         });
-        setLastRefresh(new Date());
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     // Initial fetch
     fetchDashboardData();
-
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchDashboardData, 30000);
-
-    return () => clearInterval(interval);
   }, []);
 
   if (!user || !user.creator) {
@@ -150,44 +140,11 @@ const CreatorDashboard = () => {
             <div className="content-header">
               <div className="header-content">
                 <h1>Studio Dashboard</h1>
-                <div className="header-actions">
-                  <span className="last-updated">
-                    Last updated: {lastRefresh.toLocaleTimeString()}
-                  </span>
-                  <button 
-                    className="refresh-btn"
-                    onClick={() => {
-                      const fetchDashboardData = async () => {
-                        try {
-                          setIsLoading(true);
-                          const response = await api.get('/analytics/dashboard-realtime');
-                          setDashboardData({
-                            ...response.data,
-                            lastUpdated: new Date()
-                          });
-                          setLastRefresh(new Date());
-                        } catch (error) {
-                          console.error('Error fetching dashboard data:', error);
-                        } finally {
-                          setIsLoading(false);
-                        }
-                      };
-                      fetchDashboardData();
-                    }}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? '🔄' : '🔄'} Refresh
-                  </button>
-                </div>
+
               </div>
             </div>
 
-            {isLoading && (
-              <div className="loading-overlay">
-                <div className="loading-spinner">🔄</div>
-                <p>Loading dashboard data...</p>
-              </div>
-            )}
+
 
             <div className="dashboard-grid">
               {/* Overview Stats */}

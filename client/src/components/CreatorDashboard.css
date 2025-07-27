@@ -254,13 +254,7 @@ input:checked + .toggle-slider:before {
   border-radius: 16px;
   padding: 28px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
   border: 1px solid #f0f0f0;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .card h3 {
@@ -1886,69 +1880,7 @@ input:checked + .toggle-slider:before {
   font-weight: 700;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
 
-.last-updated {
-  font-size: 14px;
-  color: #666;
-  background: #f8f9fa;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-}
-
-.refresh-btn {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: #0056b3;
-}
-
-.refresh-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-/* Loading Overlay */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.loading-spinner {
-  font-size: 32px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 
 /* Overview Card */
 .overview-card {
@@ -1969,12 +1901,6 @@ input:checked + .toggle-slider:before {
   background: #f8f9fa;
   border-radius: 16px;
   border: 1px solid #e9ecef;
-  transition: all 0.2s ease;
-}
-
-.stat-item:hover {
-  background: #e9ecef;
-  transform: translateY(-1px);
 }
 
 .stat-icon {
@@ -2027,12 +1953,6 @@ input:checked + .toggle-slider:before {
   border-radius: 16px;
   border: 1px solid #e9ecef;
   text-align: center;
-  transition: all 0.2s ease;
-}
-
-.recent-stat:hover {
-  background: #e9ecef;
-  transform: translateY(-1px);
 }
 
 .recent-label {
@@ -2066,12 +1986,6 @@ input:checked + .toggle-slider:before {
   background: #f8f9fa;
   border-radius: 16px;
   border: 1px solid #e9ecef;
-  transition: all 0.2s ease;
-}
-
-.top-asset-item:hover {
-  background: #e9ecef;
-  transform: translateY(-1px);
 }
 
 .asset-rank {
@@ -2121,10 +2035,7 @@ input:checked + .toggle-slider:before {
     align-items: flex-start;
   }
   
-  .header-actions {
-    width: 100%;
-    justify-content: space-between;
-  }
+
   
   .overview-stats {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
