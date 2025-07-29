@@ -77,20 +77,7 @@ const CreatorDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [dashboardData, setDashboardData] = useState({
-    totalAssets: 0,
-    recentAssets: 0,
-    totalViews: 0,
-    last7DaysViews: 0,
-    last24HoursViews: 0,
-    totalDownloads: 0,
-    last7DaysDownloads: 0,
-    last24HoursDownloads: 0,
-    viewsGrowth: 0,
-    topAssets: [],
-    monthlyData: [],
-    lastUpdated: new Date()
-  });
+
 
 
   // Redirect if not a creator
@@ -100,23 +87,7 @@ const CreatorDashboard = () => {
     }
   }, [user, navigate]);
 
-  // Data fetching
-  React.useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const response = await api.get('/analytics/dashboard-realtime');
-        setDashboardData({
-          ...response.data,
-          lastUpdated: new Date()
-        });
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      }
-    };
 
-    // Initial fetch
-    fetchDashboardData();
-  }, []);
 
   if (!user || !user.creator) {
     return null;
@@ -140,102 +111,195 @@ const CreatorDashboard = () => {
             <div className="content-header">
               <div className="header-content">
                 <h1>Studio Dashboard</h1>
-
+                <button className="upload-assets-btn" onClick={() => setActiveTab('assets')}>Upload Assets</button>
               </div>
             </div>
 
+                        <div className="dashboard-layout">
+              {/* Left Sidebar */}
+              <div className="left-sidebar">
+                {/* Studio Analytics & Summary Combined */}
+                <div className="card analytics-summary-card">
+                  <div className="analytics-header">
+                    <h3>Studio Analytics</h3>
+                    <div className="current-followers">
+                      <div className="followers-label">Current Followers</div>
+                      <div className="followers-value">0</div>
+                    </div>
+                  </div>
+                  
+                  <div className="summary-section">
+                    <div className="summary-subtitle">Last 28 days</div>
+                    <div className="summary-metrics">
+                      <div className="summary-item">
+                        <span className="summary-label">Total Uploads</span>
+                        <span className="summary-value">0</span>
+                      </div>
+                      <div className="summary-item">
+                        <span className="summary-label">Asset Views</span>
+                        <span className="summary-value">0</span>
+                      </div>
+                      <div className="summary-item">
+                        <span className="summary-label">Downloads</span>
+                        <span className="summary-value">0</span>
+                      </div>
+                      <div className="summary-item">
+                        <span className="summary-label">Earnings</span>
+                        <span className="summary-value">0</span>
+                      </div>
+                      <div className="summary-item">
+                        <span className="summary-label">Copyright's</span>
+                        <span className="summary-value">0</span>
+                      </div>
+                      <div className="summary-item">
+                        <span className="summary-label">Profile View</span>
+                        <span className="summary-value">0</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-
-            <div className="dashboard-grid">
-              {/* Overview Stats */}
-              <div className="card overview-card">
-                <h3>📊 Overview</h3>
-                <div className="overview-stats">
-                  <div className="stat-item">
-                    <div className="stat-icon">📁</div>
-                    <div className="stat-content">
-                      <span className="stat-value">{dashboardData.totalAssets}</span>
-                      <span className="stat-label">Total Assets</span>
-                    </div>
-                  </div>
-                  <div className="stat-item">
-                    <div className="stat-icon">📈</div>
-                    <div className="stat-content">
-                      <span className="stat-value">{dashboardData.totalViews.toLocaleString()}</span>
-                      <span className="stat-label">Total Views</span>
-                    </div>
-                  </div>
-                  <div className="stat-item">
-                    <div className="stat-icon">⬇️</div>
-                    <div className="stat-content">
-                      <span className="stat-value">{dashboardData.totalDownloads.toLocaleString()}</span>
-                      <span className="stat-label">Total Downloads</span>
-                    </div>
-                  </div>
-                  <div className="stat-item">
-                    <div className="stat-icon">📊</div>
-                    <div className="stat-content">
-                      <span className="stat-value">{dashboardData.viewsGrowth > 0 ? '+' : ''}{dashboardData.viewsGrowth}%</span>
-                      <span className="stat-label">Growth (30d)</span>
+                {/* Need Expert Help */}
+                <div className="card help-card">
+                  <h3>Need Expert Help ?</h3>
+                  <div className="help-content">
+                    <p>Get expert support to start your project with ease.</p>
+                    <div className="help-icon">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                      </svg>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Recent Activity */}
-              <div className="card recent-activity-card">
-                <h3>📅 Recent Activity (Last 30 Days)</h3>
-                <div className="recent-stats">
-                  <div className="recent-stat">
-                    <span className="recent-label">New Assets</span>
-                    <span className="recent-value">{dashboardData.recentAssets}</span>
-                  </div>
-                  <div className="recent-stat">
-                    <span className="recent-label">Views (7d)</span>
-                    <span className="recent-value">{dashboardData.last7DaysViews.toLocaleString()}</span>
-                  </div>
-                  <div className="recent-stat">
-                    <span className="recent-label">Views (24h)</span>
-                    <span className="recent-value">{dashboardData.last24HoursViews.toLocaleString()}</span>
-                  </div>
-                  <div className="recent-stat">
-                    <span className="recent-label">Downloads (7d)</span>
-                    <span className="recent-value">{dashboardData.last7DaysDownloads.toLocaleString()}</span>
-                  </div>
-                  <div className="recent-stat">
-                    <span className="recent-label">Downloads (24h)</span>
-                    <span className="recent-value">{dashboardData.last24HoursDownloads.toLocaleString()}</span>
+              {/* Main Content Area */}
+              <div className="main-content-area">
+                {/* Full Width Growth Card */}
+                <div className="full-width-growth">
+                  <div className="card growth-card">
+                    <h3>Audience Growth</h3>
+                    <div className="growth-subtitle">Reaching More People, Faster</div>
+                    <div className="growth-chart">
+                      <svg width="100%" height="200" viewBox="0 0 800 200">
+                        {/* Grid lines */}
+                        <defs>
+                          <pattern id="growthGrid" width="80" height="25" patternUnits="userSpaceOnUse">
+                            <path d="M 80 0 L 0 0 0 25" fill="none" stroke="#f0f0f0" strokeWidth="1"/>
+                          </pattern>
+                        </defs>
+                        
+                        <rect width="100%" height="100%" fill="url(#growthGrid)" />
+                        
+                        {/* X-axis labels */}
+                        <text x="10" y="190" textAnchor="middle" fontSize="12" fill="#666">Jan</text>
+                        <text x="75" y="190" textAnchor="middle" fontSize="12" fill="#666">Feb</text>
+                        <text x="140" y="190" textAnchor="middle" fontSize="12" fill="#666">Mar</text>
+                        <text x="205" y="190" textAnchor="middle" fontSize="12" fill="#666">Apr</text>
+                        <text x="270" y="190" textAnchor="middle" fontSize="12" fill="#666">May</text>
+                        <text x="335" y="190" textAnchor="middle" fontSize="12" fill="#666">Jun</text>
+                        <text x="400" y="190" textAnchor="middle" fontSize="12" fill="#666">Jul</text>
+                        <text x="465" y="190" textAnchor="middle" fontSize="12" fill="#666">Aug</text>
+                        <text x="530" y="190" textAnchor="middle" fontSize="12" fill="#666">Sep</text>
+                        <text x="595" y="190" textAnchor="middle" fontSize="12" fill="#666">Oct</text>
+                        <text x="660" y="190" textAnchor="middle" fontSize="12" fill="#666">Nov</text>
+                        <text x="725" y="190" textAnchor="middle" fontSize="12" fill="#666">Dec</text>
+                        
+                        {/* Growth line */}
+                        <path 
+                          d="M 10,160 L 75,140 L 140,120 L 205,100 L 270,90 L 335,80 L 400,70 L 465,85 L 530,75 L 595,60 L 660,50 L 725,40"
+                          stroke="#007bff" 
+                          strokeWidth="3" 
+                          fill="none"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        
+                        {/* Second growth line */}
+                        <path 
+                          d="M 10,140 L 75,130 L 140,125 L 205,135 L 270,120 L 335,110 L 400,100 L 465,115 L 530,95 L 595,85 L 660,75 L 725,65"
+                          stroke="#28a745" 
+                          strokeWidth="2" 
+                          fill="none"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeDasharray="5,5"
+                        />
+                      </svg>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Top Performing Assets */}
-              <div className="card top-assets-card">
-                <h3>🏆 Top Performing Assets</h3>
-                {dashboardData.topAssets.length > 0 ? (
-                  <div className="top-assets-list">
-                    {dashboardData.topAssets.map((asset, index) => (
-                      <div key={asset.id} className="top-asset-item">
-                        <div className="asset-rank">#{index + 1}</div>
-                        <div className="asset-info">
-                          <div className="asset-title">{asset.title}</div>
-                          <div className="asset-stats">
-                            <span className="asset-stat">👁️ {asset.views.toLocaleString()}</span>
-                            <span className="asset-stat">⬇️ {asset.downloads.toLocaleString()}</span>
-                          </div>
+                {/* Two Column Layout Below */}
+                <div className="two-column-layout">
+                  {/* Left Column - Trending Search */}
+                  <div className="trending-section">
+                    <div className="card trending-card">
+                      <h3>Suggested Trending Search</h3>
+                      <div className="trending-subtitle">Popular Keywords Today</div>
+                      <div className="trending-list">
+                        <div className="trending-item trending">
+                          <span className="trending-text">Trending Color Palettes</span>
+                          <img src={require('./image/growth_icon.svg')} alt="Growth" className="trending-icon" width="16" height="16" />
+                        </div>
+                        <div className="trending-item trending">
+                          <span className="trending-text">Free 3D Mockup Downloads</span>
+                          <img src={require('./image/growth_icon.svg')} alt="Growth" className="trending-icon" width="16" height="16" />
+                        </div>
+                        <div className="trending-item trending">
+                          <span className="trending-text">Logo Design Inspiration</span>
+                          <img src={require('./image/growth_icon.svg')} alt="Growth" className="trending-icon" width="16" height="16" />
+                        </div>
+                        <div className="trending-item">
+                          <span className="trending-text">Best Portfolio Websites for Designers</span>
+                        </div>
+                        <div className="trending-item">
+                          <span className="trending-text">AI Tools for Graphic Designers</span>
                         </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Fade Effect */}
+                    <div className="fade-effect">
+                      <svg width="100%" height="250" viewBox="0 0 509 238" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100%" height="100%" fill="url(#paint0_linear_1883_167)"/>
+                        <defs>
+                          <linearGradient id="paint0_linear_1883_167" x1="50%" y1="5.8%" x2="50%" y2="100%" gradientUnits="userSpaceOnUse">
+                            <stop stopColor="white" stopOpacity="0"/>
+                            <stop offset="1" stopColor="white"/>
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                    </div>
+
+                    {/* Upgrade to PRO Button */}
+                    <div className="upgrade-section">
+                      <button className="upgrade-pro-btn">
+                        <span>Upgrade to</span>
+                        <span className="pro-badge">PRO</span>
+                      </button>
+                    </div>
                   </div>
-                ) : (
-                  <div className="no-data">
-                    <p>No assets with analytics data yet</p>
-                    <p>Upload your first asset to start tracking performance!</p>
+
+                  {/* Right Column - Project Image */}
+                  <div className="project-section">
+                    <div className="project-image-card">
+                      <img 
+                        src={require('./image/start_project.png')} 
+                        alt="Business professionals transitioning from digital to physical workspace"
+                        className="project-img"
+                      />
+                      <div className="unlock-project-container">
+                        <span className="unlock-text">Unlock Your First</span>
+                        <button className="project-btn">
+                          <img src={require('./image/unnlock.svg')} alt="Unlock" />
+                          PROJECT
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
-
-
             </div>
           </div>
         );
