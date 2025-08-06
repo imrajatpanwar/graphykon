@@ -8,6 +8,40 @@ const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
+// @route   GET /api/assets/public
+// @desc    Get all published assets (public access)
+// @access  Public
+router.get('/public', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+
+    const assets = await Asset.find({ status: 'published' })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('creator', 'name username');
+
+    const total = await Asset.countDocuments({ status: 'published' });
+
+    res.json({
+      success: true,
+      assets: assets.map(asset => asset.getAssetInfo()),
+      pagination: {
+        current: page,
+        total: Math.ceil(total / limit),
+        hasNext: page * limit < total,
+        hasPrev: page > 1
+      }
+    });
+
+  } catch (error) {
+    console.error('Get public assets error:', error);
+    res.status(500).json({ message: 'Server error while fetching assets' });
+  }
+});
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
