@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
-import './CreatorDashboard.css';
+import { MdOutlineFileUpload } from 'react-icons/md';
+import SkeletonLoader from './SkeletonLoader';
+import './Studio.css';
 
 // Utility function to get the correct image URL for assets
 const getImageUrl = (filename) => {
@@ -35,6 +37,50 @@ const getImageUrl = (filename) => {
   console.log('getImageUrl output:', finalUrl);
   
   return finalUrl;
+};
+
+// Utility function to load image with authentication and return blob URL
+const loadAuthenticatedImage = async (filename) => {
+  if (!filename) {
+    console.warn('loadAuthenticatedImage: No filename provided');
+    return null;
+  }
+
+  try {
+    // Remove any leading slashes from filename
+    let cleanFilename = filename.replace(/^\/+/, '');
+    
+    // Remove any path prefix that might be stored in the database
+    if (cleanFilename.includes('/')) {
+      cleanFilename = cleanFilename.split('/').pop();
+    }
+
+    const token = localStorage.getItem('token');
+    const imageUrl = `https://graphykon.com/api/assets/image/${cleanFilename}`;
+    
+    console.log('Loading authenticated image:', imageUrl);
+
+    const response = await fetch(imageUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Accept': 'image/*'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to load image: ${response.status} ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    
+    console.log('✓ Image loaded successfully as blob:', blobUrl);
+    return blobUrl;
+  } catch (error) {
+    console.error('✗ Error loading authenticated image:', error);
+    return null;
+  }
 };
 
 // Utility function to get the correct profile image URL
@@ -73,10 +119,133 @@ const getProfileImageUrl = (profileImagePath) => {
   return finalUrl;
 };
 
-const CreatorDashboard = () => {
+// Custom component for authenticated images
+const AuthenticatedImage = ({ filename, alt, className, onLoad, onError }) => {
+  const [blobUrl, setBlobUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const blobUrlRef = useRef(null);
+
+  const handleLoad = useCallback(() => {
+    onLoad && onLoad();
+  }, [onLoad]);
+
+  const handleError = useCallback(() => {
+    onError && onError();
+  }, [onError]);
+
+  useEffect(() => {
+    if (!filename) {
+      setLoading(false);
+      setError(true);
+      return;
+    }
+
+    const loadImage = async () => {
+      try {
+        setLoading(true);
+        setError(false);
+        const url = await loadAuthenticatedImage(filename);
+        if (url) {
+          setBlobUrl(url);
+          blobUrlRef.current = url;
+          handleLoad();
+        } else {
+          setError(true);
+          handleError();
+        }
+      } catch (err) {
+        console.error('Error loading image:', err);
+        setError(true);
+        handleError();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadImage();
+
+    // Cleanup blob URL when component unmounts
+    return () => {
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+      }
+    };
+  }, [filename, handleLoad, handleError]);
+
+  if (loading) {
+    return (
+      <div className={className} style={{ 
+        background: '#f0f0f0', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        color: '#999',
+        fontSize: '12px'
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
+  if (error || !blobUrl) {
+    return null; // Let the parent handle showing placeholder
+  }
+
+  return (
+    <img 
+      src={blobUrl} 
+      alt={alt} 
+      className={`authenticated-image ${className || ''}`}
+      style={{ display: 'block' }}
+    />
+  );
+};
+
+// Component for asset thumbnails with proper fallback handling
+const AssetThumbnail = ({ asset }) => {
+  const [imageError, setImageError] = useState(false);
+
+  const hasImages = asset.coverImages && asset.coverImages.length > 0;
+  const showPlaceholder = !hasImages || imageError;
+
+  return (
+    <div className="asset-thumbnail">
+      {hasImages && !imageError && (
+        <AuthenticatedImage
+          filename={asset.coverImages[0].filename}
+          alt={asset.title}
+          onLoad={() => {
+            console.log('✓ Authenticated image loaded successfully:', asset.title);
+            setImageError(false);
+          }}
+          onError={() => {
+            console.error('✗ Authenticated image failed to load:', {
+              asset: asset.title,
+              filename: asset.coverImages[0].filename,
+              coverImages: asset.coverImages
+            });
+            setImageError(true);
+          }}
+        />
+      )}
+      <div 
+        className="thumbnail-placeholder" 
+        style={{
+          display: showPlaceholder ? 'flex' : 'none'
+        }}
+      >
+        <span>SOCIAL<br/>MEDIA</span>
+      </div>
+    </div>
+  );
+};
+
+const Studio = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [dashboardLoading, setDashboardLoading] = useState(true);
 
 
 
@@ -86,6 +255,14 @@ const CreatorDashboard = () => {
       navigate('/be-a-creator');
     }
   }, [user, navigate]);
+
+  // Simulate dashboard loading
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDashboardLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
 
 
@@ -100,9 +277,9 @@ const CreatorDashboard = () => {
       case 'analytics':
         return <Analytics />;
       case 'copyright':
-        return <div className="tab-content"><h2>Copyright</h2><p>Copyright content coming soon...</p></div>;
+        return <SkeletonLoader type="card" count={3} />;
       case 'earn':
-        return <div className="tab-content"><h2>Earn</h2><p>Earnings content coming soon...</p></div>;
+        return <SkeletonLoader type="card" count={4} />;
       case 'setting':
         return <UserSettings />;
       default:
@@ -115,11 +292,15 @@ const CreatorDashboard = () => {
               </div>
             </div>
 
-                        <div className="dashboard-layout">
+            <div className="dashboard-layout">
               {/* Left Sidebar */}
               <div className="left-sidebar">
-                {/* Studio Analytics & Summary Combined */}
-                <div className="card analytics-summary-card">
+                {dashboardLoading ? (
+                  <SkeletonLoader type="studio-sidebar" />
+                ) : (
+                  <>
+                    {/* Studio Analytics & Summary Combined */}
+                    <div className="card analytics-summary-card">
                   <div className="analytics-header">
                     <h3>Studio Analytics</h3>
                     <div className="current-followers">
@@ -171,12 +352,18 @@ const CreatorDashboard = () => {
                     </div>
                   </div>
                 </div>
+                  </>
+                )}
               </div>
 
               {/* Main Content Area */}
               <div className="main-content-area">
-                {/* Full Width Growth Card */}
-                <div className="full-width-growth">
+                {dashboardLoading ? (
+                  <SkeletonLoader type="studio-main" />
+                ) : (
+                  <>
+                    {/* Full Width Growth Card */}
+                    <div className="full-width-growth">
                   <div className="card growth-card">
                     <h3>Audience Growth</h3>
                     <div className="growth-subtitle">Reaching More People, Faster</div>
@@ -292,13 +479,15 @@ const CreatorDashboard = () => {
                       <div className="unlock-project-container">
                         <span className="unlock-text">Unlock Your First</span>
                         <button className="project-btn">
-                          <img src={require('./image/unnlock.svg')} alt="Unlock" />
+                          <img src="/src/components/image/unlock.svg" alt="Unlock" />
                           PROJECT
                         </button>
                       </div>
                     </div>
                   </div>
                 </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -465,6 +654,22 @@ const Assets = () => {
           console.log('===========================');
         }
         console.log('=============================');
+        
+        // Debug each asset
+        if (response.data.assets) {
+          response.data.assets.forEach((asset, index) => {
+            console.log(`Asset ${index + 1}: ${asset.title}`);
+            console.log('- Cover Images:', asset.coverImages);
+            console.log('- Cover Images Length:', asset.coverImages?.length || 0);
+            if (asset.coverImages && asset.coverImages.length > 0) {
+              console.log('- First Cover Image Filename:', asset.coverImages[0].filename);
+              console.log('- Constructed URL:', getImageUrl(asset.coverImages[0].filename));
+            } else {
+              console.log('- No cover images found, will show placeholder');
+            }
+          });
+        }
+        
         setUploadedAssets(response.data.assets);
       } catch (error) {
         console.error('Error fetching assets:', error);
@@ -651,16 +856,33 @@ const Assets = () => {
 
 
   return (
-    <div className="assets-page">
+    <div className="studio-content-page">
       {!showUploadForm && (
-        <div className="assets-header">
-          <h1>Assets</h1>
-          <button 
-            className="upload-asset-btn"
-            onClick={() => setShowUploadForm(true)}
-          >
-            Upload Asset
-          </button>
+        <div className="studio-content-header">
+          <div className="content-title-section">
+            <h1>Studio Content</h1>
+            <span className="assets-count">{uploadedAssets.length} Assets Uploaded</span>
+          </div>
+          <div className="header-actions">
+            <div className="search-container">
+              <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+              </svg>
+              <input 
+                type="text" 
+                placeholder="Search Graphykon..."
+                className="search-input"
+              />
+            </div>
+
+            <button 
+              className="Upload_button"
+              onClick={() => setShowUploadForm(true)}
+            >
+              Upload
+              <MdOutlineFileUpload />
+            </button>
+          </div>
         </div>
       )}
 
@@ -943,13 +1165,12 @@ const Assets = () => {
         </div>
       )}
 
-      {/* Uploaded Assets Display */}
+      {/* Assets Table Display */}
       {!showUploadForm && (
-        <div className="assets-grid">
+        <div className="assets-table-container">
           {fetchingAssets ? (
-            <div className="loading-state">
-              <h3>Loading Assets...</h3>
-              <p>Please wait while we fetch your assets.</p>
+            <div className="assets-loading-container">
+              <SkeletonLoader type="assets-page" />
             </div>
           ) : uploadedAssets.length === 0 ? (
             <div className="empty-state">
@@ -957,80 +1178,82 @@ const Assets = () => {
               <p>Start by uploading your first asset to showcase your work.</p>
             </div>
           ) : (
-            uploadedAssets.map(asset => (
-              <div key={asset.id} className="asset-card">
-                <div className="asset-image">
-                  {asset.coverImages && asset.coverImages.length > 0 ? (
-                    <>
-                      <img 
-                        src={getImageUrl(asset.coverImages[0].filename)} 
-                        alt={asset.title} 
-                        onError={(e) => {
-                          console.error('=== IMAGE LOAD ERROR ===');
-                          console.error('Failed URL:', e.target.src);
-                          console.error('Asset coverImages[0]:', asset.coverImages[0]);
-                          console.error('Original filename:', asset.coverImages[0].filename);
-                          console.error('Asset ID:', asset.id);
-                          
-                          // Test if it's a network issue by trying to fetch manually
-                          fetch(e.target.src, { method: 'HEAD' })
-                            .then(response => {
-                              console.error('Manual fetch status:', response.status);
-                              console.error('Response headers:', [...response.headers.entries()]);
-                            })
-                            .catch(fetchError => {
-                              console.error('Manual fetch failed:', fetchError);
-                            });
-                          
-                          console.error('========================');
-                          
-                          // Show placeholder
-                          e.target.style.display = 'none';
-                          e.target.nextElementSibling.style.display = 'block';
-                        }} 
-                        onLoad={() => {
-                          console.log('✓ Image loaded successfully:', asset.title, 'URL:', getImageUrl(asset.coverImages[0].filename));
-                        }}
-                        style={{maxWidth: '100%', height: 'auto'}}
-                      />
-                      <div className="asset-placeholder" style={{display: 'none'}}>
-                        Image Not Available
-                        <br />
-                        <small>File: {asset.coverImages[0].filename}</small>
-                        <br />
-                        <small>URL: {getImageUrl(asset.coverImages[0].filename)}</small>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="asset-placeholder">No Image</div>
-                  )}
-                  <div className="asset-overlay">
-                    <button className="edit-btn">Edit</button>
-                    <button className="delete-btn">Delete</button>
+            <>
+              <div className="table-header">
+                <div className="table-row header-row">
+                  <div className="table-cell checkbox-cell">
+                    <input type="checkbox" className="select-all-checkbox" />
                   </div>
-                </div>
-                <div className="asset-info">
-                  <h3>{asset.title}</h3>
-                  <p className="asset-category">{asset.category}</p>
-                  <p className="asset-description">{asset.description}</p>
-                  <div className="asset-tags">
-                    {asset.tags.split(',').map((tag, index) => (
-                      <span key={index} className="tag">{tag.trim()}</span>
-                    ))}
-                  </div>
-                  <div className="asset-formats">
-                    {Object.entries(asset.formats)
-                      .filter(([_, available]) => available)
-                      .map(([format, _]) => (
-                        <span key={format} className="format-badge">{format.toUpperCase()}</span>
-                      ))}
-                  </div>
-                  <p className="upload-date">
-                    Uploaded: {new Date(asset.createdAt).toLocaleDateString()}
-                  </p>
+                  <div className="table-cell asset-cell">Assets</div>
+                  <div className="table-cell date-cell">Date</div>
+                  <div className="table-cell visibility-cell">Visibility</div>
+                  <div className="table-cell monetization-cell">Monetization</div>
+                  <div className="table-cell restrictions-cell">Restrictions</div>
+                  <div className="table-cell impressions-cell">Impressions</div>
                 </div>
               </div>
-            ))
+              
+              <div className="table-body">
+                {uploadedAssets.map(asset => (
+                  <div key={asset.id} className="table-row asset-row">
+                    <div className="table-cell checkbox-cell">
+                      <input type="checkbox" className="asset-checkbox" />
+                    </div>
+                    
+                    <div className="table-cell asset-cell">
+                      <div className="asset-content">
+                        <AssetThumbnail asset={asset} />
+                        
+                        <div className="asset-details">
+                          <h3 className="asset-title">{asset.title}</h3>
+                          <p className="asset-description-short">{asset.description}</p>
+                          <div className="asset-stats">
+                            <span className="download-stat">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                              </svg>
+                              10,000
+                            </span>
+                            <span className="view-stat">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                              </svg>
+                              1,000
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="table-cell date-cell">
+                      <span className="date-text">{new Date(asset.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
+                    
+                    <div className="table-cell visibility-cell">
+                      <div className="visibility-status public">
+                        <div className="status-dot"></div>
+                        <span>Public</span>
+                      </div>
+                    </div>
+                    
+                    <div className="table-cell monetization-cell">
+                      <div className="monetization-value">
+                        <span className="currency-symbol">₹</span>
+                        <span className="amount">10,000</span>
+                      </div>
+                    </div>
+                    
+                    <div className="table-cell restrictions-cell">
+                      <span className="restrictions-text">None</span>
+                    </div>
+                    
+                    <div className="table-cell impressions-cell">
+                      <span className="impressions-count">50,000</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}
@@ -1054,13 +1277,21 @@ const Analytics = () => {
     categoryBreakdown: []
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const [timeRange, setTimeRange] = useState('30d'); // 7d, 30d, 90d, 1y
 
   // Fetch analytics data
   React.useEffect(() => {
     const fetchAnalytics = async () => {
+      const timeoutId = setTimeout(() => {
+        setLoading(false);
+        setError('Request timed out. Please try refreshing.');
+      }, 10000); // 10 second timeout
+
       try {
         setLoading(true);
+        setError(null);
         
         // Fetch all analytics data in parallel
         const [overviewRes, monthlyRes, topAssetsRes, categoryRes, activityRes] = await Promise.all([
@@ -1071,18 +1302,58 @@ const Analytics = () => {
           api.get('/analytics/recent-activity?limit=4')
         ]);
 
+        clearTimeout(timeoutId);
+
         setAnalyticsData({
-          overview: overviewRes.data.overview,
-          changes: overviewRes.data.changes,
-          monthlyStats: monthlyRes.data.monthlyStats,
-          topAssets: topAssetsRes.data.topAssets,
-          categoryBreakdown: categoryRes.data.categoryBreakdown,
-          recentActivity: activityRes.data.recentActivity
+          overview: overviewRes.data.overview || {
+            totalAssets: 0,
+            totalViews: 0,
+            totalDownloads: 0,
+            totalEarnings: 0,
+            followers: 0
+          },
+          changes: overviewRes.data.changes || {},
+          monthlyStats: monthlyRes.data.monthlyStats || [],
+          topAssets: topAssetsRes.data.topAssets || [],
+          categoryBreakdown: categoryRes.data.categoryBreakdown || [],
+          recentActivity: activityRes.data.recentActivity || []
         });
+
+        setLastUpdated(new Date());
       } catch (error) {
         console.error('Error fetching analytics:', error);
-        // Don't show dummy data - keep existing data or show empty state
+        
+        // Better error messages based on error type
+        let errorMessage = 'Failed to load analytics data';
+        if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+          errorMessage = 'Unable to connect to analytics service. Please check your connection.';
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Analytics service not available. Showing empty data.';
+        } else if (error.response?.status === 401) {
+          errorMessage = 'Authentication required. Please login again.';
+        } else if (error.response?.status >= 500) {
+          errorMessage = 'Analytics service temporarily unavailable. Please try again later.';
+        }
+        
+        setError(errorMessage);
+        
+        // Set empty state data on error (could add demo data here if needed)
+        setAnalyticsData({
+          overview: {
+            totalAssets: 0,
+            totalViews: 0,
+            totalDownloads: 0,
+            totalEarnings: 0,
+            followers: 0
+          },
+          changes: {},
+          monthlyStats: [],
+          topAssets: [],
+          categoryBreakdown: [],
+          recentActivity: []
+        });
       } finally {
+        clearTimeout(timeoutId);
         setLoading(false);
       }
     };
@@ -1091,25 +1362,75 @@ const Analytics = () => {
     fetchAnalytics();
   }, [timeRange]);
 
+  // Manual refresh function
+  const handleRefresh = () => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const [overviewRes, monthlyRes, topAssetsRes, categoryRes, activityRes] = await Promise.all([
+          api.get(`/analytics/overview?timeRange=${timeRange}`),
+          api.get('/analytics/monthly'),
+          api.get(`/analytics/top-assets?timeRange=${timeRange}&limit=4`),
+          api.get(`/analytics/category-breakdown?timeRange=${timeRange}`),
+          api.get('/analytics/recent-activity?limit=4')
+        ]);
+
+        setAnalyticsData({
+          overview: overviewRes.data.overview || {
+            totalAssets: 0,
+            totalViews: 0,
+            totalDownloads: 0,
+            totalEarnings: 0,
+            followers: 0
+          },
+          changes: overviewRes.data.changes || {},
+          monthlyStats: monthlyRes.data.monthlyStats || [],
+          topAssets: topAssetsRes.data.topAssets || [],
+          categoryBreakdown: categoryRes.data.categoryBreakdown || [],
+          recentActivity: activityRes.data.recentActivity || []
+        });
+
+        setLastUpdated(new Date());
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+        setError(error.response?.data?.message || 'Failed to load analytics data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  };
+
   if (loading) {
-    return (
-      <div className="analytics-page">
-        <div className="analytics-header">
-          <h1>Analytics</h1>
-        </div>
-        <div className="loading-state">
-          <h3>Loading Analytics...</h3>
-          <p>Please wait while we fetch your analytics data.</p>
-        </div>
-      </div>
-    );
+    return <SkeletonLoader type="analytics-page" />;
   }
 
   return (
     <div className="analytics-page">
       <div className="analytics-header">
-        <h1>Analytics</h1>
+        <div className="analytics-title-section">
+          <h1>Analytics</h1>
+          {lastUpdated && (
+            <span className="last-updated">
+              Last updated: {lastUpdated.toLocaleTimeString()}
+            </span>
+          )}
+        </div>
         <div className="analytics-controls">
+          <button 
+            onClick={handleRefresh}
+            className="refresh-btn"
+            disabled={loading}
+            title="Refresh analytics data"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
           <div className="time-range-selector">
             <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
               <option value="7d">Last 7 days</option>
@@ -1120,6 +1441,20 @@ const Analytics = () => {
           </div>
         </div>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="analytics-error">
+          <div className="error-icon">⚠️</div>
+          <div className="error-content">
+            <h3>Unable to load analytics</h3>
+            <p>{error}</p>
+            <button onClick={handleRefresh} className="retry-btn">
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Overview Cards */}
       <div className="analytics-overview">
@@ -1191,86 +1526,127 @@ const Analytics = () => {
       <div className="analytics-charts">
         <div className="chart-container">
           <h3>Monthly Performance</h3>
-          <div className="chart">
-            <svg width="100%" height="300" viewBox="0 0 800 300">
-              {/* Grid lines */}
-              <defs>
-                <pattern id="chartGrid" width="100" height="50" patternUnits="userSpaceOnUse">
-                  <path d="M 100 0 L 0 0 0 50" fill="none" stroke="#f0f0f0" strokeWidth="1"/>
-                </pattern>
-              </defs>
-              
-              <rect width="100%" height="100%" fill="url(#chartGrid)" />
-              
-              {/* X-axis labels */}
-              {analyticsData.monthlyStats.map((stat, index) => (
-                <text 
-                  key={index}
-                  x={100 + index * 100} 
-                  y="290" 
-                  textAnchor="middle" 
-                  fontSize="12" 
-                  fill="#666"
-                >
-                  {stat.month}
-                </text>
-              ))}
-              
-              {/* Views line */}
-              <path 
-                d={`M ${analyticsData.monthlyStats.map((stat, index) => 
-                  `${100 + index * 100},${300 - (stat.views / 25)}`
-                ).join(' L ')}`}
-                stroke="#007bff" 
-                strokeWidth="3" 
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              
-              {/* Downloads line */}
-              <path 
-                d={`M ${analyticsData.monthlyStats.map((stat, index) => 
-                  `${100 + index * 100},${300 - (stat.downloads * 2)}`
-                ).join(' L ')}`}
-                stroke="#28a745" 
-                strokeWidth="3" 
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              
-              {/* Legend */}
-              <circle cx="50" cy="50" r="5" fill="#007bff"/>
-              <text x="65" y="55" fontSize="12" fill="#333">Views</text>
-              <circle cx="50" cy="80" r="5" fill="#28a745"/>
-              <text x="65" y="85" fontSize="12" fill="#333">Downloads</text>
-            </svg>
-          </div>
+          {analyticsData.monthlyStats && analyticsData.monthlyStats.length > 0 ? (
+            <div className="chart">
+              <svg width="100%" height="300" viewBox="0 0 800 300">
+                {/* Grid lines */}
+                <defs>
+                  <pattern id="chartGrid" width="100" height="50" patternUnits="userSpaceOnUse">
+                    <path d="M 100 0 L 0 0 0 50" fill="none" stroke="#f0f0f0" strokeWidth="1"/>
+                  </pattern>
+                </defs>
+                
+                <rect width="100%" height="100%" fill="url(#chartGrid)" />
+                
+                {/* X-axis labels */}
+                {analyticsData.monthlyStats.map((stat, index) => (
+                  <text 
+                    key={index}
+                    x={100 + index * 100} 
+                    y="290" 
+                    textAnchor="middle" 
+                    fontSize="12" 
+                    fill="#666"
+                  >
+                    {stat.month}
+                  </text>
+                ))}
+                
+                {/* Views line */}
+                {analyticsData.monthlyStats.length > 1 && (
+                  <path 
+                    d={`M ${analyticsData.monthlyStats.map((stat, index) => 
+                      `${100 + index * 100},${300 - Math.min((stat.views || 0) / 25, 250)}`
+                    ).join(' L ')}`}
+                    stroke="#007bff" 
+                    strokeWidth="3" 
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                )}
+                
+                {/* Downloads line */}
+                {analyticsData.monthlyStats.length > 1 && (
+                  <path 
+                    d={`M ${analyticsData.monthlyStats.map((stat, index) => 
+                      `${100 + index * 100},${300 - Math.min((stat.downloads || 0) * 2, 250)}`
+                    ).join(' L ')}`}
+                    stroke="#28a745" 
+                    strokeWidth="3" 
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                )}
+                
+                {/* Data points */}
+                {analyticsData.monthlyStats.map((stat, index) => (
+                  <g key={index}>
+                    <circle 
+                      cx={100 + index * 100} 
+                      cy={300 - Math.min((stat.views || 0) / 25, 250)} 
+                      r="4" 
+                      fill="#007bff"
+                    />
+                    <circle 
+                      cx={100 + index * 100} 
+                      cy={300 - Math.min((stat.downloads || 0) * 2, 250)} 
+                      r="4" 
+                      fill="#28a745"
+                    />
+                  </g>
+                ))}
+                
+                {/* Legend */}
+                <circle cx="50" cy="50" r="5" fill="#007bff"/>
+                <text x="65" y="55" fontSize="12" fill="#333">Views</text>
+                <circle cx="50" cy="80" r="5" fill="#28a745"/>
+                <text x="65" y="85" fontSize="12" fill="#333">Downloads</text>
+              </svg>
+            </div>
+          ) : (
+            <div className="chart-empty-state">
+              <div className="empty-chart-icon">📊</div>
+              <h4>No data available</h4>
+              <p>Chart will appear when you have data for the selected time period.</p>
+            </div>
+          )}
         </div>
 
         <div className="chart-container">
           <h3>Category Performance</h3>
-          <div className="category-chart">
-            {analyticsData.categoryBreakdown.map((category, index) => (
-              <div key={index} className="category-bar">
-                <div className="category-info">
-                  <span className="category-name">{category.category}</span>
-                  <span className="category-stats">
-                    {category.views} views • {category.downloads} downloads
-                  </span>
-                </div>
-                <div className="category-progress">
-                  <div 
-                    className="progress-bar" 
-                    style={{ 
-                      width: `${(category.views / Math.max(...analyticsData.categoryBreakdown.map(c => c.views))) * 100}%` 
-                    }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
+          {analyticsData.categoryBreakdown && analyticsData.categoryBreakdown.length > 0 ? (
+            <div className="category-chart">
+              {analyticsData.categoryBreakdown.map((category, index) => {
+                const maxViews = Math.max(...analyticsData.categoryBreakdown.map(c => c.views || 0));
+                const progressWidth = maxViews > 0 ? ((category.views || 0) / maxViews) * 100 : 0;
+                
+                return (
+                  <div key={index} className="category-bar">
+                    <div className="category-info">
+                      <span className="category-name">{category.category}</span>
+                      <span className="category-stats">
+                        {(category.views || 0).toLocaleString()} views • {(category.downloads || 0).toLocaleString()} downloads
+                      </span>
+                    </div>
+                    <div className="category-progress">
+                      <div 
+                        className="progress-bar" 
+                        style={{ width: `${progressWidth}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="chart-empty-state">
+              <div className="empty-chart-icon">📈</div>
+              <h4>No category data</h4>
+              <p>Category breakdown will appear when you have uploaded assets.</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1278,41 +1654,66 @@ const Analytics = () => {
       <div className="analytics-details">
         <div className="top-assets">
           <h3>Top Performing Assets</h3>
-          <div className="assets-list">
-            {analyticsData.topAssets.map((asset, index) => (
-              <div key={asset.id} className="asset-item">
-                <div className="asset-rank">#{index + 1}</div>
-                <div className="asset-info">
-                  <h4>{asset.title}</h4>
-                  <div className="asset-stats">
-                    <span>{asset.views} views</span>
-                    <span>{asset.downloads} downloads</span>
-                    <span>${asset.earnings.toFixed(2)} earned</span>
+          {analyticsData.topAssets && analyticsData.topAssets.length > 0 ? (
+            <div className="assets-list">
+              {analyticsData.topAssets.map((asset, index) => (
+                <div key={asset.id} className="asset-item">
+                  <div className="asset-rank">#{index + 1}</div>
+                  <div className="asset-info">
+                    <h4>{asset.title}</h4>
+                    <div className="asset-stats">
+                      <span className="stat-item">
+                        <span className="stat-icon">👁️</span>
+                        {(asset.views || 0).toLocaleString()} views
+                      </span>
+                      <span className="stat-item">
+                        <span className="stat-icon">⬇️</span>
+                        {(asset.downloads || 0).toLocaleString()} downloads
+                      </span>
+                      <span className="stat-item">
+                        <span className="stat-icon">💰</span>
+                        ${(asset.earnings || 0).toFixed(2)} earned
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="analytics-empty-state">
+              <div className="empty-icon">🏆</div>
+              <h4>No top assets yet</h4>
+              <p>Your top performing assets will appear here once you have some views and downloads.</p>
+            </div>
+          )}
         </div>
 
         <div className="recent-activity">
           <h3>Recent Activity</h3>
-          <div className="activity-list">
-            {analyticsData.recentActivity.map((activity) => (
-              <div key={activity.id} className="activity-item">
-                <div className={`activity-icon ${activity.type}`}>
-                  {activity.type === 'download' ? '⬇️' : '👁️'}
+          {analyticsData.recentActivity && analyticsData.recentActivity.length > 0 ? (
+            <div className="activity-list">
+              {analyticsData.recentActivity.map((activity) => (
+                <div key={activity.id} className="activity-item">
+                  <div className={`activity-icon ${activity.type}`}>
+                    {activity.type === 'download' ? '⬇️' : '👁️'}
+                  </div>
+                  <div className="activity-content">
+                    <p>
+                      <strong>{activity.user}</strong> {activity.type === 'download' ? 'downloaded' : 'viewed'} 
+                      <strong> {activity.asset}</strong>
+                    </p>
+                    <span className="activity-time">{activity.time}</span>
+                  </div>
                 </div>
-                <div className="activity-content">
-                  <p>
-                    <strong>{activity.user}</strong> {activity.type === 'download' ? 'downloaded' : 'viewed'} 
-                    <strong>{activity.asset}</strong>
-                  </p>
-                  <span className="activity-time">{activity.time}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="analytics-empty-state">
+              <div className="empty-icon">📱</div>
+              <h4>No recent activity</h4>
+              <p>Recent views and downloads will appear here as users interact with your assets.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1333,6 +1734,15 @@ const UserSettings = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading for settings page
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -1467,6 +1877,10 @@ const UserSettings = () => {
       alert(error.response?.data?.message || 'Failed to remove profile image');
     }
   };
+
+  if (loading) {
+    return <SkeletonLoader type="settings-page" />;
+  }
 
   return (
     <div className="user-settings">
@@ -1645,4 +2059,4 @@ const UserSettings = () => {
   );
 };
 
-export default CreatorDashboard; 
+export default Studio; 

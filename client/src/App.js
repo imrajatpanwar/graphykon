@@ -7,7 +7,7 @@ import Home from './components/Home';
 import Run from './components/Run';
 import Header from './components/Header';
 import BeACreator from './components/BeACreator';
-import CreatorDashboard from './components/CreatorDashboard';
+import Studio from './components/Studio';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
@@ -27,7 +27,7 @@ function App() {
             } />
             <Route path="/studio" element={
               <PrivateRoute>
-                <CreatorDashboard />
+                <Studio />
               </PrivateRoute>
             } />
             <Route path="/" element={<Home />} />

@@ -5,7 +5,7 @@ const Run = () => {
   const commands = [
     {
       title: "🚀 Deploy to Server (One Command)",
-      command: "ssh root@89.117.58.204 \"cd /var/www/graphykon && ./deploy.sh\"",
+      command: "ssh root@89.117.58.204 \"cd /var/www/graphykon && chmod +x deploy.sh && ./deploy.sh\"",
       description: "Complete automated deployment - pulls code, installs dependencies, restarts servers, builds frontend"
     },
     {
