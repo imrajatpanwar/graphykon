@@ -16,6 +16,7 @@ const Home = () => {
     try {
       setLoading(true);
       console.log('Fetching assets from:', api.defaults.baseURL + '/assets/public');
+      console.log('API config:', api.defaults);
       const response = await api.get('/assets/public');
       console.log('Response received:', response);
       if (response.data.success) {
@@ -24,6 +25,7 @@ const Home = () => {
     } catch (err) {
       console.error('Error fetching assets:', err);
       console.error('Error details:', err.response?.data, err.response?.status);
+      console.error('Error config:', err.config);
       setError('Failed to load assets');
     } finally {
       setLoading(false);
