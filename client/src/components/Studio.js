@@ -807,11 +807,7 @@ const Assets = () => {
       });
       
       // Upload to backend
-      const response = await api.post('/assets/upload', formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await api.post('/assets/upload', formDataToSend);
       
       // Add to uploaded assets
       setUploadedAssets(prev => [response.data.asset, ...prev]);

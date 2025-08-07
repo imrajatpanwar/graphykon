@@ -6,9 +6,6 @@ const API_BASE_URL = 'https://graphykon.com/api';
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Request interceptor to add JWT token to headers
