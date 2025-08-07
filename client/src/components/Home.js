@@ -32,7 +32,7 @@ const Home = () => {
 
   const getImageUrl = (asset) => {
     if (asset.coverImages && asset.coverImages.length > 0) {
-      return `http://localhost:5000/api/assets/image/${asset.coverImages[0].filename}`;
+      return `https://graphykon.com/api/assets/image/${asset.coverImages[0].filename}`;
     }
     return null;
   };
@@ -106,7 +106,7 @@ const Home = () => {
                   <div className="creator-profile-image">
                     {asset.creator && asset.creator.profileImage ? (
                       <img 
-                        src={`http://localhost:5000/api/assets/image/${asset.creator.profileImage}`} 
+                        src={`https://graphykon.com/api/assets/image/${asset.creator.profileImage}`} 
                         alt={asset.creator.name || asset.creator.username || 'Creator'}
                       />
                     ) : (
