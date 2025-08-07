@@ -108,7 +108,7 @@ const Home = () => {
                   <div className="creator-profile-image">
                     {asset.creator && asset.creator.profileImage ? (
                       <img 
-                        src={`https://graphykon.com/api/assets/image/${asset.creator.profileImage}`} 
+                        src={`https://graphykon.com/api/assets/image/${asset.creator.profileImage.split('/').pop()}`} 
                         alt={asset.creator.name || asset.creator.username || 'Creator'}
                       />
                     ) : (
