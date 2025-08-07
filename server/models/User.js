@@ -30,9 +30,10 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true, // Allow null/undefined values but ensure uniqueness when present
     trim: true,
+    lowercase: true, // Automatically convert to lowercase
     minlength: [3, 'Username must be at least 3 characters'],
     maxlength: [30, 'Username cannot be more than 30 characters'],
-    match: [/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores']
+    match: [/^[a-z0-9_]+$/, 'Username can only contain lowercase letters, numbers, and underscores']
   },
   phone: {
     type: String,

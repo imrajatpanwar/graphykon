@@ -18,10 +18,11 @@ router.post('/be-a-creator', protect, [
     .withMessage('Creator name must be between 2 and 50 characters'),
   body('username')
     .trim()
+    .toLowerCase()
     .isLength({ min: 3, max: 30 })
     .withMessage('Username must be between 3 and 30 characters')
-    .matches(/^[a-zA-Z0-9_]+$/)
-    .withMessage('Username can only contain letters, numbers, and underscores'),
+    .matches(/^[a-z0-9_]+$/)
+    .withMessage('Username can only contain lowercase letters, numbers, and underscores'),
   body('phone')
     .optional()
     .trim()
@@ -151,6 +152,8 @@ router.post('/be-a-creator', protect, [
       }
     }
 
+
+
     // Update user with creator information
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
@@ -165,6 +168,8 @@ router.post('/be-a-creator', protect, [
       },
       { new: true, runValidators: true }
     );
+
+
 
     res.json({
       success: true,

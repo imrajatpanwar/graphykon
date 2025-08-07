@@ -1748,7 +1748,7 @@ const UserSettings = () => {
     const { name, value } = e.target;
     setProfileData(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'username' ? value.toLowerCase() : value
     }));
   };
 

@@ -156,6 +156,7 @@ assetSchema.methods.getAssetInfo = function() {
     downloads: this.downloads,
     views: this.views,
     rating: this.rating,
+    creator: this.creator,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt
   };

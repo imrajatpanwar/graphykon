@@ -62,7 +62,7 @@ const BeACreator = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'username' ? value.toLowerCase() : value
     }));
     
     // Clear error for this field

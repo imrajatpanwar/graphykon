@@ -17,17 +17,21 @@ router.get('/public', async (req, res) => {
     const limit = parseInt(req.query.limit) || 12;
     const skip = (page - 1) * limit;
 
+
+
     const assets = await Asset.find({ status: 'published' })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('creator', 'name username');
+      .populate('creator', 'name username profileImage');
 
     const total = await Asset.countDocuments({ status: 'published' });
 
+    const assetInfos = assets.map(asset => asset.getAssetInfo());
+
     res.json({
       success: true,
-      assets: assets.map(asset => asset.getAssetInfo()),
+      assets: assetInfos,
       pagination: {
         current: page,
         total: Math.ceil(total / limit),
@@ -525,5 +529,7 @@ router.get('/image/:filename', (req, res) => {
     res.status(500).json({ message: 'Server error while serving image' });
   }
 });
+
+
 
 module.exports = router; 

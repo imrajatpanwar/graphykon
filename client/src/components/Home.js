@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../config/api';
 import SkeletonLoader from './SkeletonLoader';
-import '../global.css';
+import './Home.css';
 
 const Home = () => {
   const [assets, setAssets] = useState([]);
@@ -15,12 +15,15 @@ const Home = () => {
   const fetchAssets = async () => {
     try {
       setLoading(true);
+      console.log('Fetching assets from:', api.defaults.baseURL + '/assets/public');
       const response = await api.get('/assets/public');
+      console.log('Response received:', response);
       if (response.data.success) {
         setAssets(response.data.assets);
       }
     } catch (err) {
       console.error('Error fetching assets:', err);
+      console.error('Error details:', err.response?.data, err.response?.status);
       setError('Failed to load assets');
     } finally {
       setLoading(false);
@@ -29,7 +32,7 @@ const Home = () => {
 
   const getImageUrl = (asset) => {
     if (asset.coverImages && asset.coverImages.length > 0) {
-      return `https://graphykon.com/api/assets/image/${asset.coverImages[0].filename}`;
+      return `http://localhost:5000/api/assets/image/${asset.coverImages[0].filename}`;
     }
     return null;
   };
@@ -37,10 +40,6 @@ const Home = () => {
   if (loading) {
     return (
       <div className="home-container">
-        <div className="hero-section">
-          <h1>Discover Amazing Design Assets</h1>
-          <p>Browse and download high-quality graphics created by talented designers</p>
-        </div>
         <div className="assets-grid">
           {[...Array(8)].map((_, index) => (
             <SkeletonLoader key={index} />
@@ -66,11 +65,6 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      <div className="hero-section">
-        <h1>Discover Amazing Design Assets</h1>
-        <p>Browse and download high-quality graphics created by talented designers</p>
-      </div>
-      
       {assets.length === 0 ? (
         <div className="no-assets">
           <h3>No assets available yet</h3>
@@ -80,40 +74,61 @@ const Home = () => {
         <div className="assets-grid">
           {assets.map((asset) => (
             <div key={asset.id} className="asset-card">
-              <div className="asset-image">
+              <div className="asset-thumbnail">
                 {getImageUrl(asset) ? (
-                  <img 
-                    src={getImageUrl(asset)} 
-                    alt={asset.title}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div className="asset-placeholder" style={{ display: getImageUrl(asset) ? 'none' : 'flex' }}>
-                  <span>No Preview</span>
-                </div>
+                  <>
+                    <img 
+                      src={getImageUrl(asset)} 
+                      alt={asset.title}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        const placeholder = e.target.parentElement.querySelector('.asset-placeholder');
+                        if (placeholder) {
+                          placeholder.style.display = 'flex';
+                        }
+                      }}
+                    />
+                                      <div className="asset-placeholder" style={{display: 'none'}}>
+                    <span className="placeholder-text">{asset.title}</span>
+                  </div>
+                  </>
+                ) : (
+                  <div className="asset-placeholder">
+                    <span className="placeholder-text">{asset.title}</span>
+                    <div style={{fontSize: '0.7rem', marginTop: '0.5rem', opacity: 0.8}}>
+                      No cover image
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="asset-info">
-                <h3 className="asset-title">{asset.title}</h3>
-                <p className="asset-description">{asset.description}</p>
-                <div className="asset-meta">
-                  <span className="asset-category">{asset.category}</span>
-                  <span className="asset-dimensions">{asset.width} × {asset.height}</span>
-                </div>
-                <div className="asset-stats">
-                  <span className="downloads">↓ {asset.downloads}</span>
-                  <span className="views">👁 {asset.views}</span>
-                </div>
-                <div className="asset-formats">
-                  {Object.entries(asset.formats).map(([format, available]) => 
-                    available && (
-                      <span key={format} className="format-tag">
-                        {format.toUpperCase()}
-                      </span>
-                    )
-                  )}
+              <div className="asset-details">
+                <div className="asset-info-container">
+                  <div className="creator-profile-image">
+                    {asset.creator && asset.creator.profileImage ? (
+                      <img 
+                        src={`http://localhost:5000/api/assets/image/${asset.creator.profileImage}`} 
+                        alt={asset.creator.name || asset.creator.username || 'Creator'}
+                      />
+                    ) : (
+                      <div className="default-profile">
+                        {asset.creator && (asset.creator.name || asset.creator.username) ? 
+                          (asset.creator.name || asset.creator.username).charAt(0).toUpperCase() : 
+                          'U'
+                        }
+                      </div>
+                    )}
+                  </div>
+                  <div className="asset-text-info">
+                    <h3 className="asset-title">{asset.title}</h3>
+                    <p className="creator-name">
+                      {asset.creator && asset.creator.name ? 
+                        asset.creator.name : 
+                        asset.creator && asset.creator.username ? 
+                          asset.creator.username : 
+                          'Unknown Creator'
+                      }
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
