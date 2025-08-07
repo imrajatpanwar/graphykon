@@ -90,6 +90,9 @@ cat > /etc/nginx/sites-available/graphykon.com << 'EOF'
 server {
     server_name graphykon.com www.graphykon.com;
 
+    # Allow large uploads (increase as needed)
+    client_max_body_size 600M;
+
     # API routes - proxy to Node.js backend
     location /api {
         proxy_pass http://localhost:5000;
@@ -101,6 +104,11 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
+
+        # Improve handling of large multipart uploads
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_request_buffering off;
     }
 
     # Serve React production build
