@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import api from '../config/api';
 import SkeletonLoader from './SkeletonLoader';
 
@@ -8,7 +9,6 @@ const AssetDetail = () => {
   const navigate = useNavigate();
   const [asset, setAsset] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchAsset = async () => {
@@ -18,17 +18,19 @@ const AssetDetail = () => {
         if (res.data?.success) {
           setAsset(res.data.asset);
         } else {
-          setError('Asset not found');
+          toast.error('Asset not found');
+          navigate('/');
         }
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to load asset');
+        toast.error(err.response?.data?.message || 'Failed to load asset');
+        navigate('/');
       } finally {
         setLoading(false);
       }
     };
 
     fetchAsset();
-  }, [id]);
+  }, [id, navigate]);
 
   useEffect(() => {
     // Record a view when the detail page is opened
@@ -44,16 +46,6 @@ const AssetDetail = () => {
 
   if (loading) {
     return <SkeletonLoader type="card" count={1} />;
-  }
-
-  if (error) {
-    return (
-      <div style={{ padding: '2rem' }}>
-        <h2>Oops! Something went wrong</h2>
-        <p>{error}</p>
-        <button onClick={() => navigate(-1)} className="retry-btn">Go Back</button>
-      </div>
-    );
   }
 
   if (!asset) return null;

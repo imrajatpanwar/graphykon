@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
 const Signup = () => {
@@ -7,7 +8,6 @@ const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
   const { signup } = useAuth();
@@ -15,15 +15,14 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      toast.error('Passwords do not match');
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      toast.error('Password must be at least 6 characters long');
       return;
     }
 
@@ -32,9 +31,10 @@ const Signup = () => {
     const result = await signup(name, email, password);
     
     if (result.success) {
+      toast.success('Account created successfully!');
       navigate('/home');
     } else {
-      setError(result.error);
+      toast.error(result.error || 'Signup failed');
     }
     
     setLoading(false);
@@ -88,8 +88,6 @@ const Signup = () => {
           {loading ? 'Creating account...' : 'Sign Up'}
         </button>
       </form>
-      
-      {error && <div className="error">{error}</div>}
       
       <p style={{ textAlign: 'center', marginTop: '20px' }}>
         Already have an account? <Link to="/login">Login</Link>

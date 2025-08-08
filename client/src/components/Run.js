@@ -1,4 +1,5 @@
 import React from 'react';
+import { toast } from 'react-hot-toast';
 import './Run.css';
 
 const Run = () => {
@@ -62,7 +63,7 @@ const Run = () => {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert('Command copied to clipboard!');
+    toast.success('Command copied to clipboard!');
   };
 
   return (

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
   const { login } = useAuth();
@@ -13,15 +13,15 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     const result = await login(email, password);
     
     if (result.success) {
+      toast.success('Login successful!');
       navigate('/home');
     } else {
-      setError(result.error);
+      toast.error(result.error || 'Login failed');
     }
     
     setLoading(false);
@@ -55,8 +55,6 @@ const Login = () => {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        
-        {error && <div className="error">{error}</div>}
         
         <p style={{ textAlign: 'center', marginTop: '20px' }}>
           Don't have an account? <Link to="/signup">Sign up</Link>

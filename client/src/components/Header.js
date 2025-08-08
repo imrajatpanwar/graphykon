@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import '../index.css';
 import './Header.css';
@@ -7,6 +8,11 @@ import GraphykonLogo from './image/Graphykon_logo.svg';
 
 const Header = () => {
   const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    toast.success('Logged out successfully');
+  };
 
   return (
     <header className="header" style={{
@@ -67,7 +73,7 @@ const Header = () => {
                 transition: 'background-color 0.2s'
               }}>Be a Creator</Link>
             )}
-            <button onClick={logout} style={{
+            <button onClick={handleLogout} style={{
               textDecoration: 'none',
               padding: '0.5rem 1rem',
               backgroundColor: '#dc3545',

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../config/api';
 import './BeACreator.css';
@@ -80,14 +81,14 @@ const BeACreator = () => {
       // Check file size (5MB limit)
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       if (file.size > maxSize) {
-        alert('Profile image must be less than 5MB');
+        toast.error('Profile image must be less than 5MB');
         e.target.value = '';
         return;
       }
       
       // Check file type
       if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
+        toast.error('Please select an image file');
         e.target.value = '';
         return;
       }
@@ -164,12 +165,14 @@ const BeACreator = () => {
       // Update user data in context
       updateUser(response.data.user);
       
+      toast.success('Successfully registered as creator!');
+      
       // Redirect to studio
       navigate('/studio');
       
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to register as creator';
-      setErrors({ submit: errorMessage });
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

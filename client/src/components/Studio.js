@@ -5,6 +5,7 @@ import api from '../config/api';
 import { MdOutlineFileUpload, MdOutlineRemoveRedEye } from 'react-icons/md';
 import SkeletonLoader from './SkeletonLoader';
 import './Studio.css';
+import { toast } from 'react-hot-toast';
 
 // Utility function to get the correct image URL for assets
 const getImageUrl = (filename) => {
@@ -709,7 +710,7 @@ const Assets = () => {
   const handleCoverImagesChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 4) {
-      alert('Maximum 4 cover images allowed');
+      toast.error('Maximum 4 cover images allowed');
       return;
     }
 
@@ -720,7 +721,7 @@ const Assets = () => {
     // Check individual cover image sizes
     for (const file of files) {
       if (file.size > MAX_COVER_IMAGE_MB * 1024 * 1024) {
-        alert(`Each cover image must be <= ${MAX_COVER_IMAGE_MB}MB`);
+        toast.error(`Each cover image must be <= ${MAX_COVER_IMAGE_MB}MB`);
         return;
       }
     }
@@ -728,7 +729,7 @@ const Assets = () => {
     // Check combined size with already-selected main file
     const totalBytes = (mainFile ? mainFile.size : 0) + files.reduce((sum, f) => sum + f.size, 0);
     if (totalBytes > MAX_TOTAL_MB * 1024 * 1024) {
-      alert(`Total upload size must be <= ${MAX_TOTAL_MB}MB (main file + cover images)`);
+      toast.error(`Total upload size must be <= ${MAX_TOTAL_MB}MB (main file + cover images)`);
       return;
     }
 
@@ -742,7 +743,7 @@ const Assets = () => {
       const MAX_TOTAL_MB = 95; // total payload
 
       if (file.size > MAX_MAIN_FILE_MB * 1024 * 1024) {
-        alert(`Main file must be <= ${MAX_MAIN_FILE_MB}MB`);
+        toast.error(`Main file must be <= ${MAX_MAIN_FILE_MB}MB`);
         e.target.value = '';
         return;
       }
@@ -750,7 +751,7 @@ const Assets = () => {
       // Ensure total including any already-selected cover images stays within cap
       const coversBytes = coverImages.reduce((sum, f) => sum + f.size, 0);
       if (file.size + coversBytes > MAX_TOTAL_MB * 1024 * 1024) {
-        alert(`Total upload size must be <= ${MAX_TOTAL_MB}MB (main file + cover images)`);
+        toast.error(`Total upload size must be <= ${MAX_TOTAL_MB}MB (main file + cover images)`);
         e.target.value = '';
         return;
       }
@@ -764,49 +765,49 @@ const Assets = () => {
     
     // Client-side validation
     if (!formData.title.trim()) {
-      alert('Title is required');
+      toast.error('Title is required');
       return;
     }
     
     if (!formData.description.trim()) {
-      alert('Description is required');
+      toast.error('Description is required');
       return;
     }
     
     if (!formData.tags.trim()) {
-      alert('Tags are required');
+      toast.error('Tags are required');
       return;
     }
     
     if (!formData.category) {
-      alert('Category is required');
+      toast.error('Category is required');
       return;
     }
     
     if (!formData.width.trim()) {
-      alert('Width is required');
+      toast.error('Width is required');
       return;
     }
     
     if (!formData.height.trim()) {
-      alert('Height is required');
+      toast.error('Height is required');
       return;
     }
     
     if (!mainFile) {
-      alert('Main file is required');
+      toast.error('Main file is required');
       return;
     }
     
     if (coverImages.length === 0) {
-      alert('At least one cover image is required');
+      toast.error('At least one cover image is required');
       return;
     }
     
     // Check if at least one format is selected
     const hasFormat = Object.values(formData.formats).some(format => format);
     if (!hasFormat) {
-      alert('At least one format must be selected');
+      toast.error('At least one format must be selected');
       return;
     }
     
@@ -841,7 +842,7 @@ const Assets = () => {
       const MAX_TOTAL_MB = 95;
       const totalBytes = (mainFile ? mainFile.size : 0) + coverImages.reduce((s, f) => s + f.size, 0);
       if (totalBytes > MAX_TOTAL_MB * 1024 * 1024) {
-        alert(`Total upload size must be <= ${MAX_TOTAL_MB}MB (main file + cover images)`);
+        toast.error(`Total upload size must be <= ${MAX_TOTAL_MB}MB (main file + cover images)`);
         return;
       }
 
@@ -875,7 +876,7 @@ const Assets = () => {
       setMainFile(null);
       setShowUploadForm(false);
       
-      alert('Asset uploaded successfully!');
+      toast.success('Asset uploaded successfully!');
       
     } catch (error) {
       console.error('Upload error:', error);
@@ -883,9 +884,9 @@ const Assets = () => {
       if (error.response?.data?.errors) {
         // Show validation errors
         const errorMessages = error.response.data.errors.map(err => `${err.param}: ${err.msg}`).join('\n');
-        alert(`Validation errors:\n${errorMessages}`);
+        toast.error(`Validation errors:\n${errorMessages}`);
       } else {
-        alert(error.response?.data?.message || 'Failed to upload asset');
+        toast.error(error.response?.data?.message || 'Failed to upload asset');
       }
     } finally {
       setLoading(false);
@@ -1795,14 +1796,14 @@ const UserSettings = () => {
       // Check file size (5MB limit)
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       if (file.size > maxSize) {
-        alert('Profile image must be less than 5MB');
+        toast.error('Profile image must be less than 5MB');
         e.target.value = '';
         return;
       }
       
       // Check file type
       if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
+        toast.error('Please select an image file');
         e.target.value = '';
         return;
       }
@@ -1871,13 +1872,15 @@ const UserSettings = () => {
       setIsEditing(false);
       setProfileImage(null);
       
+      toast.success('Profile updated successfully!');
+      
       console.log('Profile update successful!');
       
     } catch (error) {
       console.error('Profile update error details:', error);
       console.error('Error response:', error.response);
       console.error('Error message:', error.message);
-      alert(error.response?.data?.message || 'Failed to update profile');
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setIsSaving(false);
     }
@@ -1907,11 +1910,11 @@ const UserSettings = () => {
       // Update user data in context
       updateUser(response.data.user);
       
-      alert('Profile image removed successfully!');
+      toast.success('Profile image removed successfully!');
       
     } catch (error) {
       console.error('Profile image deletion error:', error);
-      alert(error.response?.data?.message || 'Failed to remove profile image');
+      toast.error(error.response?.data?.message || 'Failed to remove profile image');
     }
   };
 
