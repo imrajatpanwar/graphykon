@@ -5,6 +5,7 @@ const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const Asset = require('../models/Asset');
 const { protect } = require('../middleware/auth');
+const Analytics = require('../models/Analytics');
 
 const router = express.Router();
 
@@ -43,6 +44,68 @@ router.get('/public', async (req, res) => {
   } catch (error) {
     console.error('Get public assets error:', error);
     res.status(500).json({ message: 'Server error while fetching assets' });
+  }
+});
+
+// @route   GET /api/assets/public/:id
+// @desc    Get a specific published asset (public access)
+// @access  Public
+router.get('/public/:id', async (req, res) => {
+  try {
+    const asset = await Asset.findOne({ _id: req.params.id, status: 'published' })
+      .populate('creator', 'name username profileImage');
+
+    if (!asset) {
+      return res.status(404).json({ message: 'Asset not found' });
+    }
+
+    return res.json({ success: true, asset: asset.getAssetInfo() });
+  } catch (error) {
+    console.error('Get public asset error:', error);
+    return res.status(500).json({ message: 'Server error while fetching asset' });
+  }
+});
+
+// @route   POST /api/assets/:id/view
+// @desc    Record a view for an asset (public access)
+// @access  Public
+router.post('/:id/view', async (req, res) => {
+  try {
+    const asset = await Asset.findById(req.params.id);
+
+    if (!asset || asset.status !== 'published') {
+      return res.status(404).json({ message: 'Asset not found' });
+    }
+
+    // Increment view counter on the asset document
+    asset.views = (asset.views || 0) + 1;
+    await asset.save();
+
+    // Capture request metadata
+    const ip = (req.headers['x-forwarded-for'] || '').split(',').shift() || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+    const referrer = req.headers['referer'] || req.headers['referrer'];
+
+    // Create analytics event (best-effort; do not block response on failure)
+    try {
+      await Analytics.create({
+        asset: asset._id,
+        creator: asset.creator,
+        // user left undefined for anonymous views
+        type: 'view',
+        ipAddress: ip,
+        userAgent,
+        referrer,
+        metadata: {}
+      });
+    } catch (analyticsError) {
+      console.warn('Non-blocking: failed to record analytics view event:', analyticsError.message);
+    }
+
+    return res.json({ success: true, views: asset.views });
+  } catch (error) {
+    console.error('Record view error:', error);
+    return res.status(500).json({ message: 'Server error while recording view' });
   }
 });
 

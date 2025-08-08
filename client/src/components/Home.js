@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 import SkeletonLoader from './SkeletonLoader';
 import './Home.css';
@@ -7,6 +8,7 @@ const Home = () => {
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchAssets();
@@ -75,7 +77,19 @@ const Home = () => {
       ) : (
         <div className="assets-grid">
           {assets.map((asset) => (
-            <div key={asset.id} className="asset-card">
+            <div
+              key={asset.id}
+              className="asset-card"
+              onClick={() => navigate(`/asset/${asset.id}`)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate(`/asset/${asset.id}`);
+                }
+              }}
+            >
               <div className="asset-thumbnail">
                 {getImageUrl(asset) ? (
                   <>

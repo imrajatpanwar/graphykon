@@ -23,6 +23,7 @@
     overflow: hidden;
     position: relative;
     transition: all .3s ease;
+    cursor: pointer;
 }
 
 .asset-card:hover {
