@@ -37,9 +37,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control']
 }));
 
-// Body parsing middleware
-app.use(express.json({ limit: '500mb' }));
-app.use(express.urlencoded({ extended: true, limit: '500mb' }));
+// Body parsing middleware (keep generous but below common gateway caps)
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
 // Serve uploaded files with proper headers
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {

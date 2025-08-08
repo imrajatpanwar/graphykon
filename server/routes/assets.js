@@ -91,8 +91,9 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 500 * 1024 * 1024, // 500MB limit
-    files: 5 // Max 5 files (1 main file + 4 cover images)
+    // Keep each file safely under common 100MB edge/proxy caps
+    fileSize: 100 * 1024 * 1024,
+    files: 5 // 1 main + up to 4 covers
   }
 });
 
@@ -199,15 +200,24 @@ router.post('/upload', protect, (req, res, next) => {
     const mainFile = req.files.mainFile[0];
     const coverImages = req.files.coverImages;
 
-    // Validate file sizes
-    if (mainFile.size > 500 * 1024 * 1024) {
-      return res.status(400).json({ message: 'Main file size exceeds 500MB limit' });
+    // Validate file sizes with conservative limits to avoid upstream 413
+    const MAX_MAIN_FILE_BYTES = 80 * 1024 * 1024; // 80MB
+    const MAX_COVER_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB each
+    const MAX_TOTAL_BYTES = 95 * 1024 * 1024; // total payload cap
+
+    if (mainFile.size > MAX_MAIN_FILE_BYTES) {
+      return res.status(400).json({ message: 'Main file size exceeds 80MB limit' });
     }
 
     for (const image of coverImages) {
-      if (image.size > 10 * 1024 * 1024) { // 10MB limit for cover images
-        return res.status(400).json({ message: 'Cover image size exceeds 10MB limit' });
+      if (image.size > MAX_COVER_IMAGE_BYTES) {
+        return res.status(400).json({ message: 'Each cover image must be 5MB or less' });
       }
+    }
+
+    const totalBytes = mainFile.size + coverImages.reduce((sum, img) => sum + img.size, 0);
+    if (totalBytes > MAX_TOTAL_BYTES) {
+      return res.status(400).json({ message: 'Total upload (main file + cover images) must be 95MB or less' });
     }
 
     // Create asset object

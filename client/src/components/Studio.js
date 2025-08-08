@@ -708,22 +708,53 @@ const Assets = () => {
 
   const handleCoverImagesChange = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length <= 4) {
-      setCoverImages(files);
-    } else {
+    if (files.length > 4) {
       alert('Maximum 4 cover images allowed');
+      return;
     }
+
+    // Limits aligned with reverse proxy/CDN constraints
+    const MAX_COVER_IMAGE_MB = 5; // each cover image <= 5MB
+    const MAX_TOTAL_MB = 95; // total payload <= 95MB (safe under 100MB edge limit)
+
+    // Check individual cover image sizes
+    for (const file of files) {
+      if (file.size > MAX_COVER_IMAGE_MB * 1024 * 1024) {
+        alert(`Each cover image must be <= ${MAX_COVER_IMAGE_MB}MB`);
+        return;
+      }
+    }
+
+    // Check combined size with already-selected main file
+    const totalBytes = (mainFile ? mainFile.size : 0) + files.reduce((sum, f) => sum + f.size, 0);
+    if (totalBytes > MAX_TOTAL_MB * 1024 * 1024) {
+      alert(`Total upload size must be <= ${MAX_TOTAL_MB}MB (main file + cover images)`);
+      return;
+    }
+
+    setCoverImages(files);
   };
 
   const handleMainFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const maxSize = 500 * 1024 * 1024; // 500MB in bytes
-      if (file.size > maxSize) {
-        alert('File size must be less than 500MB');
+      const MAX_MAIN_FILE_MB = 80; // keep margin for covers
+      const MAX_TOTAL_MB = 95; // total payload
+
+      if (file.size > MAX_MAIN_FILE_MB * 1024 * 1024) {
+        alert(`Main file must be <= ${MAX_MAIN_FILE_MB}MB`);
         e.target.value = '';
         return;
       }
+
+      // Ensure total including any already-selected cover images stays within cap
+      const coversBytes = coverImages.reduce((sum, f) => sum + f.size, 0);
+      if (file.size + coversBytes > MAX_TOTAL_MB * 1024 * 1024) {
+        alert(`Total upload size must be <= ${MAX_TOTAL_MB}MB (main file + cover images)`);
+        e.target.value = '';
+        return;
+      }
+
       setMainFile(file);
     }
   };
@@ -806,8 +837,20 @@ const Assets = () => {
         formDataToSend.append('coverImages', image);
       });
       
+      // Final safety: block if total payload is over edge limit
+      const MAX_TOTAL_MB = 95;
+      const totalBytes = (mainFile ? mainFile.size : 0) + coverImages.reduce((s, f) => s + f.size, 0);
+      if (totalBytes > MAX_TOTAL_MB * 1024 * 1024) {
+        alert(`Total upload size must be <= ${MAX_TOTAL_MB}MB (main file + cover images)`);
+        return;
+      }
+
       // Upload to backend
-      const response = await api.post('/assets/upload', formDataToSend);
+      const response = await api.post('/assets/upload', formDataToSend, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+      });
       
       // Add to uploaded assets
       setUploadedAssets(prev => [response.data.asset, ...prev]);
@@ -920,7 +963,7 @@ const Assets = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="mainFile">Main File * (Max 500MB)</label>
+                <label htmlFor="mainFile">Main File * (Max 80MB)</label>
                 <input
                   type="file"
                   id="mainFile"
@@ -928,11 +971,11 @@ const Assets = () => {
                   onChange={handleMainFileChange}
                   required
                 />
-                <small>Main asset file (JPG, PNG, PSD, PDF, AI, EPS, SVG, ZIP, RAR)</small>
+                <small>Main asset file (JPG, PNG, PSD, PDF, AI, EPS, SVG, ZIP, RAR). Total upload (main + covers) must be ≤ 95MB.</small>
               </div>
 
               <div className="form-group">
-                <label htmlFor="coverImages">Cover Images * (Max 4)</label>
+                <label htmlFor="coverImages">Cover Images * (Max 4, each ≤ 5MB)</label>
                 <input
                   type="file"
                   id="coverImages"
@@ -941,7 +984,7 @@ const Assets = () => {
                   onChange={handleCoverImagesChange}
                   required
                 />
-                <small>Main images of the asset (select multiple images)</small>
+                <small>Main images of the asset (select multiple images). Total upload (main + covers) must be ≤ 95MB.</small>
               </div>
 
               <div className="form-group">
