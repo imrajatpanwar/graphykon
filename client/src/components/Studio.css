@@ -915,14 +915,14 @@ input:checked + .toggle-slider:before {
 
 /* Asset Cards */
 .asset-card {
-  display: block;
-  min-width: 300px;
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  position: relative;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px #0000001a;
+    display: block;
+    min-width: 324px;
+    overflow: hidden;
+    position: relative;
+    transition: all .3s ease;
 }
 
 .asset-card:hover {

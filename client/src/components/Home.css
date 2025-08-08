@@ -15,18 +15,14 @@
 }
 
 .asset-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px #0000001a;
-  display: block;
-  min-width: 300px;
-  width: 200px;
-  overflow: hidden;
-  position: relative;
-  transition: all .3s ease;
-  cursor: pointer;
-  border: 1px solid #f0f0f0;
-  box-sizing: border-box;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px #0000001a;
+    display: block;
+    min-width: 324px;
+    overflow: hidden;
+    position: relative;
+    transition: all .3s ease;
 }
 
 .asset-card:hover {
