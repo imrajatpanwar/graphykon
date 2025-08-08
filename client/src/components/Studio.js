@@ -1251,11 +1251,11 @@ const Assets = () => {
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                               </svg>
-                              10,000
+                              {asset.downloads || 0}
                             </span>
                               <span className="view-stat">
                                 <MdOutlineRemoveRedEye size={14} />
-                                1,000
+                                {asset.views || 0}
                               </span>
                           </div>
                         </div>
