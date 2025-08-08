@@ -15,24 +15,8 @@ const Header = () => {
   };
 
   return (
-    <header className="header" style={{
-      background: '#fff',
-      color: '#222',
-      padding: '1rem 2rem',
-      textAlign: 'center',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      borderBottom: '2px solid #007bff',
-      position: 'sticky',
-      top: 0,
-      zIndex: 1000
-    }}>
-      <div className="logo" style={{
-        display: 'flex',
-        alignItems: 'center'
-      }}>
+    <header className="header">
+      <div className="logo">
         <Link to="/" style={{ textDecoration: 'none' }}>
           <img 
             src={GraphykonLogo} 
@@ -45,11 +29,7 @@ const Header = () => {
         </Link>
       </div>
       
-      <div className="header-buttons" style={{
-        display: 'flex',
-        gap: '1rem',
-        alignItems: 'center'
-      }}>
+      <div className="header-buttons">
         {user ? (
           <>
             {user.creator ? (

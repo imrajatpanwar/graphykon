@@ -1,23 +1,21 @@
 .header {
-  background: #fff;
-  color: #222;
-  padding: 1rem 2rem;
+  background: rgb(255, 255, 255);
+  color: rgb(34, 34, 34);
+  padding: 10px 2rem;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 4px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 2px solid #007bff;
+  border-bottom: 2px solid rgb(0, 123, 255);
   position: sticky;
-  top: 0;
+  top: 0px;
   z-index: 1000;
 }
 
 .logo {
-  font-size: 2rem;
-  font-weight: 700;
-  text-align: left;
-  color: #007bff;
+  display: flex;
+  align-items: center;
 }
 
 .header-buttons {
