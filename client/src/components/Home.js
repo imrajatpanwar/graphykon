@@ -45,7 +45,7 @@ const Home = () => {
   if (loading) {
     return (
       <div className="home-container">
-        <div className="assets-grid">
+        <div className="home-assets-grid">
           {[...Array(8)].map((_, index) => (
             <SkeletonLoader key={index} />
           ))}
@@ -76,11 +76,11 @@ const Home = () => {
           <p>Be the first to share your creative work!</p>
         </div>
       ) : (
-        <div className="assets-grid">
+        <div className="home-assets-grid">
           {assets.map((asset) => (
             <div
               key={asset.id}
-              className="asset-card"
+              className="home-asset-card"
               onClick={() => navigate(`/asset/${asset.id}`)}
               role="button"
               tabIndex={0}
@@ -91,7 +91,7 @@ const Home = () => {
                 }
               }}
             >
-              <div className="asset-thumbnail">
+              <div className="home-asset-thumbnail">
                 {getImageUrl(asset) ? (
                   <>
                     <img 
@@ -99,35 +99,35 @@ const Home = () => {
                       alt={asset.title}
                       onError={(e) => {
                         e.target.style.display = 'none';
-                        const placeholder = e.target.parentElement.querySelector('.asset-placeholder');
+                        const placeholder = e.target.parentElement.querySelector('.home-asset-placeholder');
                         if (placeholder) {
                           placeholder.style.display = 'flex';
                         }
                       }}
                     />
-                                      <div className="asset-placeholder" style={{display: 'none'}}>
-                    <span className="placeholder-text">{asset.title}</span>
+                                      <div className="home-asset-placeholder" style={{display: 'none'}}>
+                    <span className="home-placeholder-text">{asset.title}</span>
                   </div>
                   </>
                 ) : (
-                  <div className="asset-placeholder">
-                    <span className="placeholder-text">{asset.title}</span>
+                  <div className="home-asset-placeholder">
+                    <span className="home-placeholder-text">{asset.title}</span>
                     <div style={{fontSize: '0.7rem', marginTop: '0.5rem', opacity: 0.8}}>
                       No cover image
                     </div>
                   </div>
                 )}
               </div>
-              <div className="asset-details">
-                <div className="asset-info-container">
-                  <div className="creator-profile-image">
+              <div className="home-asset-details">
+                <div className="home-asset-info-container">
+                  <div className="home-creator-profile-image">
                     {asset.creator && asset.creator.profileImage ? (
                       <img 
                         src={`https://graphykon.com/api/assets/image/${asset.creator.profileImage.split('/').pop()}`} 
                         alt={asset.creator.name || asset.creator.username || 'Creator'}
                       />
                     ) : (
-                      <div className="default-profile">
+                      <div className="home-default-profile">
                         {asset.creator && (asset.creator.name || asset.creator.username) ? 
                           (asset.creator.name || asset.creator.username).charAt(0).toUpperCase() : 
                           'U'
@@ -135,9 +135,9 @@ const Home = () => {
                       </div>
                     )}
                   </div>
-                  <div className="asset-text-info">
-                    <h3 className="asset-title">{asset.title}</h3>
-                    <p className="creator-name">
+                  <div className="home-asset-text-info">
+                    <h3 className="home-asset-title">{asset.title}</h3>
+                    <p className="home-creator-name">
                       {asset.creator && asset.creator.name ? 
                         asset.creator.name : 
                         asset.creator && asset.creator.username ? 
@@ -146,12 +146,12 @@ const Home = () => {
                       }
                     </p>
                   </div>
-                  <div className="asset-stats">
-                    <span className="view-stat">
+                  <div className="home-asset-stats">
+                    <span className="home-view-stat">
                       <MdOutlineRemoveRedEye size={14} />
                       {asset.views || 0}
                     </span>
-                    <span className="download-stat">
+                    <span className="home-download-stat">
                       <MdOutlineDownload size={14} />
                       {asset.downloads || 0}
                     </span>
