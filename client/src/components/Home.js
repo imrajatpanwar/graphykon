@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { MdOutlineRemoveRedEye, MdOutlineDownload } from 'react-icons/md';
 import api from '../config/api';
 import SkeletonLoader from './SkeletonLoader';
 import './Home.css';
@@ -144,6 +145,16 @@ const Home = () => {
                           'Unknown Creator'
                       }
                     </p>
+                  </div>
+                  <div className="asset-stats">
+                    <span className="view-stat">
+                      <MdOutlineRemoveRedEye size={14} />
+                      {asset.views || 0}
+                    </span>
+                    <span className="download-stat">
+                      <MdOutlineDownload size={14} />
+                      {asset.downloads || 0}
+                    </span>
                   </div>
                 </div>
               </div>
