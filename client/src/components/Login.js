@@ -38,7 +38,7 @@ const Login = () => {
         <div className="signup-hero-overlay" />
         <div className="signup-hero-content">
           <h2>Welcome back</h2>
-          <p>Sign in to continue to your dashboard and manage your creative assets.</p>
+          <p>Login to continue to your dashboard and manage your creative assets.</p>
           <div className="trust-row">
             <img src={userPlus} alt="Users" className="trust-icon" />
             <span>Trusted by 10,000+ users</span>
@@ -51,7 +51,7 @@ const Login = () => {
           <img src={logo} alt="Graphykon" className="brand-logo" />
         </div>
         <div className="welcome">
-          <p>Sign in to your account</p>
+          <p>Login to your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="signup-form">
@@ -80,7 +80,7 @@ const Login = () => {
           </div>
 
           <button type="submit" className="primary-btn" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
