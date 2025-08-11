@@ -24,7 +24,7 @@ const Login = () => {
 
     if (result.success) {
       toast.success('Welcome back!');
-      navigate('/home');
+      navigate('/');
     } else {
       toast.error(result.error || 'Login failed');
     }
