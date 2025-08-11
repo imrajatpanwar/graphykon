@@ -11,6 +11,7 @@ import Header from './components/Header';
 import BeACreator from './components/BeACreator';
 import Studio from './components/Studio';
 import PrivateRoute from './components/PrivateRoute';
+import Admin from './components/Admin';
 
 function App() {
   return (
@@ -54,6 +55,11 @@ function App() {
             <Route path="/studio" element={
               <PrivateRoute>
                 <Studio />
+              </PrivateRoute>
+            } />
+            <Route path="/admin" element={
+              <PrivateRoute>
+                <Admin />
               </PrivateRoute>
             } />
             <Route path="/asset/:id" element={<AssetDetail />} />

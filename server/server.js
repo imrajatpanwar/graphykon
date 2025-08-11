@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const creatorRoutes = require('./routes/creator');
 const assetRoutes = require('./routes/assets');
 const analyticsRoutes = require('./routes/analytics');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/creator', creatorRoutes);
 app.use('/api/assets', assetRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

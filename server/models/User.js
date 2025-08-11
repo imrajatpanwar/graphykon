@@ -24,6 +24,11 @@ const userSchema = new mongoose.Schema({
     minlength: [6, 'Password must be at least 6 characters'],
     select: false // Don't include password in queries by default
   },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
   // Creator-specific fields
   username: {
     type: String,
@@ -93,6 +98,7 @@ userSchema.methods.getUserInfo = function() {
     id: this._id,
     name: this.name,
     email: this.email,
+    role: this.role,
     username: this.username,
     phone: this.phone,
     location: this.location,

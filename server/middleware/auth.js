@@ -33,11 +33,21 @@ const protect = async (req, res, next) => {
   }
 };
 
-// Generate JWT token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+// Generate JWT token with role claim
+const generateToken = (id, role) => {
+  const payload = { id };
+  if (role) payload.role = role;
+  return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE || '24h'
   });
 };
 
-module.exports = { protect, generateToken }; 
+// Admin guard middleware
+const requireAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  next();
+};
+
+module.exports = { protect, requireAdmin, generateToken };

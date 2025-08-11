@@ -4,8 +4,13 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
+const crypto = require('crypto');
 const User = require('../models/User');
 const { protect, generateToken } = require('../middleware/auth');
+
+// Admin override credentials (with safe defaults per user request)
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@graphykon.com';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'admin13';
 
 const router = express.Router();
 
@@ -191,15 +196,15 @@ router.post('/signup', [
       return res.status(400).json({ message: 'User already exists with this email' });
     }
 
-    // Create new user
+    // Create new user (default role is 'user')
     const user = await User.create({
       name,
       email,
       password
     });
 
-    // Generate JWT token
-    const token = generateToken(user._id);
+    // Generate JWT token with role claim
+    const token = generateToken(user._id, user.role);
 
     // Send response
     res.status(201).json({
@@ -238,6 +243,28 @@ router.post('/login', [
 
     const { email, password } = req.body;
 
+    // Admin override via env credentials
+    if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
+      let adminUser = await User.findOne({ email: ADMIN_EMAIL });
+      if (!adminUser) {
+        adminUser = await User.create({
+          name: 'Admin',
+          email: ADMIN_EMAIL,
+          password: crypto.randomBytes(24).toString('hex'),
+          role: 'admin'
+        });
+      } else if (adminUser.role !== 'admin') {
+        adminUser.role = 'admin';
+        await adminUser.save();
+      }
+
+      adminUser.lastLogin = new Date();
+      await adminUser.save();
+
+      const token = generateToken(adminUser._id, adminUser.role);
+      return res.json({ success: true, token, user: adminUser.getUserInfo() });
+    }
+
     // Find user by email and include password for comparison
     const user = await User.findOne({ email }).select('+password');
     
@@ -255,8 +282,8 @@ router.post('/login', [
     user.lastLogin = new Date();
     await user.save();
 
-    // Generate JWT token
-    const token = generateToken(user._id);
+    // Generate JWT token with role claim
+    const token = generateToken(user._id, user.role);
 
     // Send response
     res.json({

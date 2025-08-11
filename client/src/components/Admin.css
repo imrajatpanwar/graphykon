@@ -1,0 +1,23 @@
+.admin-container { padding: 1rem 1.5rem; }
+.admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+.admin-tabs { display:flex; gap:0.5rem; margin-bottom:1rem; }
+.admin-tab { padding:0.5rem 0.75rem; border:1px solid #e5e7eb; border-radius:6px; cursor:pointer; background:#f9fafb; }
+.admin-tab.active { background:#111827; color:#fff; border-color:#111827; }
+.admin-actions { display:flex; gap:0.5rem; align-items:center; }
+.admin-table { width:100%; border-collapse:collapse; }
+.admin-table th, .admin-table td { border-bottom:1px solid #e5e7eb; padding:0.5rem; text-align:left; font-size:14px; }
+.admin-table th { background:#f3f4f6; font-weight:600; }
+.admin-toolbar { display:flex; gap:0.5rem; margin-bottom:0.75rem; }
+.admin-input { padding:0.5rem; border:1px solid #d1d5db; border-radius:6px; }
+.admin-select { padding:0.5rem; border:1px solid #d1d5db; border-radius:6px; background:white; }
+.admin-button { padding:0.4rem 0.7rem; border-radius:6px; border:1px solid #d1d5db; background:white; cursor:pointer; }
+.admin-button.primary { background:#2563eb; color:white; border-color:#2563eb; }
+.admin-badge { padding:0.15rem 0.4rem; border-radius:9999px; font-size:12px; border:1px solid #d1d5db; background:#f9fafb; }
+.admin-badge.admin { background:#e0e7ff; border-color:#c7d2fe; color:#1e3a8a; }
+.admin-badge.user { background:#dcfce7; border-color:#bbf7d0; color:#166534; }
+.admin-status { padding:0.15rem 0.4rem; border-radius:9999px; font-size:12px; border:1px solid #d1d5db; }
+.admin-status.published { background:#dcfce7; border-color:#bbf7d0; color:#166534; }
+.admin-status.draft { background:#fef9c3; border-color:#fde68a; color:#92400e; }
+.admin-status.archived { background:#e5e7eb; border-color:#d1d5db; color:#374151; }
+.admin-pagination { display:flex; gap:0.5rem; align-items:center; justify-content:flex-end; margin-top:0.75rem; }
+

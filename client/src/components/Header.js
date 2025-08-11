@@ -32,6 +32,17 @@ const Header = () => {
       <div className="header-buttons">
         {user ? (
           <>
+            {user.role === 'admin' && (
+              <Link to="/admin" style={{
+                textDecoration: 'none',
+                padding: '0.5rem 1rem',
+                backgroundColor: '#111827',
+                color: 'white',
+                borderRadius: '4px',
+                fontWeight: '500',
+                transition: 'background-color 0.2s'
+              }}>Admin</Link>
+            )}
             {user.creator ? (
               <Link to="/studio" style={{
                 textDecoration: 'none',
