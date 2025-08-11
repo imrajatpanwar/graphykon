@@ -1,0 +1,5 @@
+[33mfa4d547[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Update signup UI with split-screen design and header styles
+[33m4944ebe[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix CSS conflict: prefix Home component classes to prevent Studio.css interference
+[33ma5c283f[m Change asset display from horizontal to vertical layout on home page
+[33m2643577[m Add React Hot Toast notifications throughout the project
+[33mcd3d754[m Home: add Download and View indicators on asset cards
